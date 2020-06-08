@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
+import keyboard
 from pytesseract import image_to_string
 from PIL import Image
 import pyautogui
@@ -16,20 +17,24 @@ import win32con
 def main(debug=False):
 	enemy_life_pixel = get_enemy_life_pixel()
 	x_battle, y_battle, x1_battle, y1_battle = get_battle_area_pos(use_coordinates=True)
-	for x in range(x_battle, x1_battle, 25):
-		for y in range(y_battle, y1_battle, 25):
+	for x in range(x_battle, x1_battle, 20):
+		for y in range(y_battle, y1_battle, 20):
+			time.sleep(0.01)
 			move_cursor(x, y)
 			if pyautogui.pixelMatchesColor(
 					enemy_life_pixel[0],
 					enemy_life_pixel[1],
 					enemy_life_pixel[2],
-					10):
+					3):
 				print('Mob found!')
-				pyautogui.doubleClick(x, y)
+				right_click(x, y, True)
+				keyboard.press('F1')
 				break
 		else:
 			continue  # only executed if the inner loop did NOT break
 		break  # only executed if the inner loop DID break
+
+
 
 
 def get_enemy_life_pixel():
@@ -87,11 +92,20 @@ def move_cursor(x, y):
     win32api.SetCursorPos((x, y))
 
 
-def click(x, y):
-    win32api.SetCursorPos((x, y))
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+def right_click(x, y, set_position=True):
+	if set_position:
+		win32api.SetCursorPos((x, y))
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
+
+def double_right_click(x, y, set_position=True):
+	if set_position:
+		win32api.SetCursorPos((x, y))
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
 # region Helpers
 def start_countdown(sleep_time_sec=5):
