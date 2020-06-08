@@ -1,12 +1,15 @@
 import pyautogui
 import ctypes
-import win32api
-import win32con
 import time
 from pyfiglet import Figlet
 from pathlib import Path
 
-# Take Screenshot (PIL Image) and save to a path
+# install pywin32 to use these modules
+import win32api # subpackage of pywin32
+import win32con # subpackage of pywin32
+import win32gui # subpackage of pywin32
+
+# Take Screenshot (PIL Image) and save to a path. pyautogui is very slow.
 # Library: pyautogui, pathlib.Path
 def take_screenshot(region=None):
 	#region, first fixel then width and height
@@ -16,28 +19,8 @@ def take_screenshot(region=None):
 	scr.save(Path(__file__).parent/'screenshot.png')
 
 
-# Get pixel color on screen based on X and Y coordinates. Very Fast.
-# Library: ctypes
-def pixel(x, y):
-    """
-    #PARA RGB
-    hdc = ctypes.windll.user32.GetDC(0)
-    color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
-    r = color % 256
-    g = (color // 256) % 256
-    b = color // (256 ** 2)
-    ctypes.windll.user32.ReleaseDC(0, hdc)
-    return (r, g, b)
-    """
-	#NON RGB
-    hdc = ctypes.windll.user32.GetDC(0)
-    color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
-    ctypes.windll.user32.ReleaseDC(0, hdc)
-    return color
-
-
 # Right Click on screen based on X and Y coordinates. Very Fast.
-# Library: win32api, win32con
+# Library: pywin32 -> import win32api, pywin32 -> import win32con
 def right_click(x, y):
     win32api.SetCursorPos((x, y))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
@@ -45,11 +28,19 @@ def right_click(x, y):
 
 
 # Move the cursor in screen based on X and Y coordinates. Very Fast.
-# Library: win32api, time
+# Library: pywin32 -> import win32api, time
 def move_cursor(x, y, delay=None):
 	win32api.SetCursorPos((x, y))
 	if delay:
 		time.sleep(delay)
+
+
+# Get the current cursor info, like type and position.
+# Library: pywin32 -> import win32gui
+def get_cursor_info():
+	cursor_info = win32gui.GetCursorInfo()
+	print(cursor_info)
+	return cursor_info
 
 
 # Get the current cursor type, like arrow, pointer, etc. Very Fast.
@@ -76,8 +67,29 @@ def get_cursor_type():
 
     if GetCursorInfo(ctypes.byref(info)):
         print(info.hCursor)
+        return info.hCursor		
     else:
-        pass  # Error occurred (invalid structure size?)
+        return  # Error occurred (invalid structure size?)
+
+
+# Get pixel color on screen based on X and Y coordinates. Very Fast.
+# Library: ctypes
+def pixel(x, y):
+    """
+    #PARA RGB
+    hdc = ctypes.windll.user32.GetDC(0)
+    color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
+    r = color % 256
+    g = (color // 256) % 256
+    b = color // (256 ** 2)
+    ctypes.windll.user32.ReleaseDC(0, hdc)
+    return (r, g, b)
+    """
+	#NON RGB
+    hdc = ctypes.windll.user32.GetDC(0)
+    color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
+    ctypes.windll.user32.ReleaseDC(0, hdc)
+    return color
 
 
 # Simple countdown
@@ -98,7 +110,9 @@ def print_logo(text_logo: str):
 
 
 def main():
-	take_screenshot()
+	while 1:
+		get_cursor_info()
+		time.sleep(0.1)
 
 
 if __name__ == "__main__":
