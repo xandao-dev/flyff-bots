@@ -3,6 +3,7 @@ import ctypes
 import win32api
 import win32con
 import time
+from pyfiglet import Figlet
 from pathlib import Path
 
 # Take Screenshot (PIL Image) and save to a path
@@ -42,6 +43,7 @@ def right_click(x, y):
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
+
 # Move the cursor in screen based on X and Y coordinates. Very Fast.
 # Library: win32api, time
 def move_cursor(x, y, delay=None):
@@ -76,6 +78,23 @@ def get_cursor_type():
         print(info.hCursor)
     else:
         pass  # Error occurred (invalid structure size?)
+
+
+# Simple countdown
+# Library: time
+def start_countdown(sleep_time_sec=5):
+    print('Starting', end='')
+    for i in range(10):
+        print('.', end='')
+        time.sleep(sleep_time_sec/10)
+    print('\nReady, forcing dwarves to work!')
+
+
+# Print Figlet(Like a app title in terminal)
+# Library: pyfiglet.Figlet
+def print_logo(text_logo: str):
+    figlet = Figlet(font='slant')
+    print(figlet.renderText(text_logo))
 
 
 def main():

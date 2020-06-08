@@ -18,67 +18,17 @@ import win32con
 def main(debug=False):
 	print('\nHold "q" to stop the bot.')
 
-	enemy_life_pixel = get_enemy_life_pixel()
 	battle_area_pos = get_battle_area_pos(use_coordinates=True)
 	for x in range(battle_area_pos[0], battle_area_pos[2], 25):
 		for y in range(battle_area_pos[1], battle_area_pos[3], 25):
-			move_mouse(x, y)
+			move_cursor(x, y)
 			time.sleep(0.01)
-			#print(pixel(x, y))
-			if match_pixel(
-					enemy_life_pixel[0],
-					enemy_life_pixel[1],
-					enemy_life_pixel[2]):
-				pyautogui.doubleClick(x, y)
-				break
 		else:
 			continue  # only executed if the inner loop did NOT break
 		break  # only executed if the inner loop DID break
 
 
 # region Mouse
-def get_char_head_pos():
-    print('\nClick in the top of the head of the char! The first click will be considered.')
-
-    char_head_pos = []
-
-    def on_click(x, y, button, pressed):
-        if pressed:
-            char_head_pos.extend((x, y))
-        if not pressed:
-            return False
-
-    with MouseListener(on_click=on_click) as mouse_listener:
-        mouse_listener.join()
-
-    return char_head_pos
-
-
-def get_enemy_life_area_pos():
-    print("\nSelect the top-left corner of the enemy life, then select the " +
-          "bottom-right corner.\nThe two first clicks will be considered.")
-
-    enemy_life_area_pos = []
-    is_first_click = [True]
-
-    def on_click(x, y, button, pressed):
-        if pressed:
-            if is_first_click[0]:
-                enemy_life_area_pos.extend((x, y))
-                is_first_click[0] = False
-            else:
-                width = x - enemy_life_area_pos[0]
-                height = y - enemy_life_area_pos[1]
-                enemy_life_area_pos.extend((width, height))
-                return False
-
-    with MouseListener(on_click=on_click) as mouse_listener:
-        mouse_listener.join()
-
-    time.sleep(0.5)
-    return enemy_life_area_pos
-
-
 def get_enemy_life_pixel():
     """Get enemy life(red bar) pixel position and color
 
@@ -156,7 +106,7 @@ def get_cursor_type():
         pass  # Error occurred (invalid structure size?)
 
 
-def move_mouse(x, y):
+def move_cursor(x, y):
     win32api.SetCursorPos((x, y))
 
 
@@ -168,47 +118,12 @@ def click(x, y):
 
 
 # region Helpers
-def pixel(x, y):
-    """
-    #PARA RGB
-    hdc = ctypes.windll.user32.GetDC(0)
-    color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
-    r = color % 256
-    g = (color // 256) % 256
-    b = color // (256 ** 2)
-    ctypes.windll.user32.ReleaseDC(0, hdc)
-    return (r, g, b)
-    """
-    hdc = ctypes.windll.user32.GetDC(0)
-    color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
-    ctypes.windll.user32.ReleaseDC(0, hdc)
-    return color
-
-
-def match_pixel(x, y, color_to_match):
-    hdc = ctypes.windll.user32.GetDC(0)
-    color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
-    ctypes.windll.user32.ReleaseDC(0, hdc)
-    #print(f'color_to_match: {color_to_match}, color: {color}')
-    return color-10 <= color_to_match and color+10 >= color_to_match
-
-
-def get_circles(radius, border):
-    circles = []
-    for x in range(round(radius*2)):
-        for y in range(round(radius*2)):
-            circle_eq = round((x-radius)**2 + (y-radius)**2)
-            if circle_eq >= (radius**2 - border) and circle_eq <= (radius**2 + border):
-                circles.append((x, y))
-    return circles
-
-
 def start_countdown(sleep_time_sec=5):
     print('Starting', end='')
     for i in range(10):
         print('.', end='')
         time.sleep(sleep_time_sec/10)
-    print('\nReady,forcing gnomes to work hard!')
+    print('\nReady, forcing gnomes to work hard!')
 
 
 def print_logo(text_logo: str):
