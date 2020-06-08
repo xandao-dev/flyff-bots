@@ -1,31 +1,29 @@
 # region Imports
 import time
-import re
-import ctypes
 from pathlib import Path
-
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 from pytesseract import image_to_string
 from PIL import Image
-import keyboard
 import pyautogui
 import win32api
 import win32con
 # endregion
 
 
+# Notas: objetos longes precisam ser analisados em um intervalo de pixel menor(10+-) 
+# e também precisam de um delay para o mouse não passar do ponto
 def main(debug=False):
 	enemy_life_pixel = get_enemy_life_pixel()
-	battle_area_pos = get_battle_area_pos(use_coordinates=True)
-	for x in range(battle_area_pos[0], battle_area_pos[2], 25):
-		for y in range(battle_area_pos[1], battle_area_pos[3], 25):
+	x_battle, y_battle, x1_battle, y1_battle = get_battle_area_pos(use_coordinates=True)
+	for x in range(x_battle, x1_battle, 25):
+		for y in range(y_battle, y1_battle, 25):
 			move_cursor(x, y)
 			if pyautogui.pixelMatchesColor(
 					enemy_life_pixel[0],
 					enemy_life_pixel[1],
 					enemy_life_pixel[2],
-					25):
+					10):
 				print('Mob found!')
 				pyautogui.doubleClick(x, y)
 				break
@@ -34,7 +32,6 @@ def main(debug=False):
 		break  # only executed if the inner loop DID break
 
 
-# region Mouse
 def get_enemy_life_pixel():
     """Get enemy life(red bar) pixel position and color
 
@@ -86,32 +83,6 @@ def get_battle_area_pos(use_coordinates=False):
     return battle_area_pos
 
 
-def get_cursor_type():
-    # Argument structures
-    class POINT(ctypes.Structure):
-        _fields_ = [('x', ctypes.c_int),
-                    ('y', ctypes.c_int)]
-
-    class CURSORINFO(ctypes.Structure):
-        _fields_ = [('cbSize', ctypes.c_uint),
-                    ('flags', ctypes.c_uint),
-                    ('hCursor', ctypes.c_void_p),
-                    ('ptScreenPos', POINT)]
-
-    # Load function from user32.dll and set argument types
-    GetCursorInfo = ctypes.windll.user32.GetCursorInfo
-    GetCursorInfo.argtypes = [ctypes.POINTER(CURSORINFO)]
-
-    # Initialize the output structure
-    info = CURSORINFO()
-    info.cbSize = ctypes.sizeof(info)
-
-    if GetCursorInfo(ctypes.byref(info)):
-        print(info.hCursor)
-    else:
-        pass  # Error occurred (invalid structure size?)
-
-
 def move_cursor(x, y):
     win32api.SetCursorPos((x, y))
 
@@ -120,7 +91,6 @@ def click(x, y):
     win32api.SetCursorPos((x, y))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
-# endregion
 
 
 # region Helpers
