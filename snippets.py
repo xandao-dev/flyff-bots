@@ -2,12 +2,15 @@ import pyautogui
 import ctypes
 import time
 from pyfiglet import Figlet
+from pytesseract import image_to_string
 from pathlib import Path
 
-# install pywin32 to use these modules
+# install pywin32 to use these modules and execute the installer in Scripts folder
+# https://github.com/mhammond/pywin32
 import win32api # subpackage of pywin32
 import win32con # subpackage of pywin32
 import win32gui # subpackage of pywin32
+import win32ui  # subpackage of pywin32
 
 # Take Screenshot (PIL Image) and save to a path. pyautogui is very slow.
 # Library: pyautogui, pathlib.Path
@@ -90,6 +93,16 @@ def pixel(x, y):
     color = ctypes.windll.gdi32.GetPixel(hdc, x, y)
     ctypes.windll.user32.ReleaseDC(0, hdc)
     return color
+
+
+# Extract text from image using OCR
+# Library: pytesseract.image_to_string, also need to install tesseract in computer and add to path.
+def get_text_from_image(pil_img):
+	#get text and split in array
+	text_list = image_to_string(pil_img, lang='eng').split('\n')
+	#Delete empty strings
+	text_list = [i for i in text_list if i.strip()]
+	return text_list
 
 
 # Simple countdown
