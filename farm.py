@@ -16,13 +16,19 @@ import win32con
 
 
 def main(debug=False):
-	print('\nHold "q" to stop the bot.')
-
+	enemy_life_pixel = get_enemy_life_pixel()
 	battle_area_pos = get_battle_area_pos(use_coordinates=True)
 	for x in range(battle_area_pos[0], battle_area_pos[2], 25):
 		for y in range(battle_area_pos[1], battle_area_pos[3], 25):
 			move_cursor(x, y)
-			time.sleep(0.01)
+			if pyautogui.pixelMatchesColor(
+					enemy_life_pixel[0],
+					enemy_life_pixel[1],
+					enemy_life_pixel[2],
+					25):
+				print('Mob found!')
+				pyautogui.doubleClick(x, y)
+				break
 		else:
 			continue  # only executed if the inner loop did NOT break
 		break  # only executed if the inner loop DID break
@@ -33,7 +39,7 @@ def get_enemy_life_pixel():
     """Get enemy life(red bar) pixel position and color
 
     Returns:
-            List: 0-> x, 1-> y, 2-> color
+            List: 0-> x, 1-> y, 2-> (rbg)
     """
     print('\nClick inside the life enemy life to get the pixel color.')
 
@@ -41,7 +47,7 @@ def get_enemy_life_pixel():
 
     def on_click(x, y, button, pressed):
         if pressed:
-            enemy_life_pixel.extend((x, y, pixel(x, y)))
+            enemy_life_pixel.extend((x, y, pyautogui.pixel(x, y)))
         if not pressed:
             return False
 
