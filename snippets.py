@@ -122,10 +122,44 @@ def print_logo(text_logo: str):
     print(figlet.renderText(text_logo))
 
 
+#region Working with non active Windows
+
+# Right Click on window based on X and Y coordinates. The window doesn't need to be active. Very Fast.
+# Library: pywin32 -> import win32gui, time
+def get_focused_window_handle():
+	print('\nClick in the window to get the process! The first click will be considered.')
+	
+	hwnd = []
+	def on_click(x, y, button, pressed):
+		if not pressed:
+			hwnd.append(win32gui.GetForegroundWindow())
+			return False
+	
+	
+	with MouseListener(on_click=on_click) as mouse_listener:
+		mouse_listener.join()
+
+	print('Window Selected: ', win32gui.GetWindowText(hwnd[0]))
+	time.sleep(0.5)
+	return hwnd[0]
+
+
+# Right Click on window based on X and Y coordinates. The window doesn't need to be active. Very Fast.
+# Library: pywin32 -> import win32api, pywin32 -> import win32con
+def right_click_window(hwnd, x, y):
+	lParam = win32api.MAKELONG(x, y)
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, lParam)
+
+#endregion
+
 def main():
 	while 1:
-		get_cursor_info()
-		time.sleep(0.1)
+		print('FindWindow:', win32gui.FindWindow(None, 'Clockworks Flyff - xandao6'))
+		print('GetForegroundWindow:', win32gui.GetForegroundWindow())
+
+		print('GetWindowText: ', win32gui.GetWindowText(win32gui.FindWindow(None, 'Clockworks Flyff - xandao6')))
+		time.sleep(0.25)
 
 
 if __name__ == "__main__":

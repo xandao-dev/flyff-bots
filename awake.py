@@ -10,6 +10,7 @@ from PIL import Image
 import keyboard
 import pyautogui
 import win32api
+import win32gui
 import win32con
 #endregion
 
@@ -38,6 +39,7 @@ def main(debug=False):
 	attribute = input('What is the attribute? ')
 	attribute2 = input('What is the attribute 2? ')
 	min_value = int(input('What is the minimum value? '))
+	hwnd = get_focused_window_handle()
 	start_awake_button_pos = get_start_awake_button_pos()
 	awake_area_pos = get_awake_area_pos()
 	start_countdown(3)
@@ -69,11 +71,29 @@ def main(debug=False):
 					exit()
 
 		#click in awake button
-		click(*start_awake_button_pos)
+		right_click_window(hwnd, *start_awake_button_pos)
 		time.sleep(awakening_interval)
 
 
 # region Mouse
+def get_focused_window_handle():
+	print('\nClick in the flyff window to get the process! The first click will be considered.')
+	
+	hwnd = []
+	def on_click(x, y, button, pressed):
+		if not pressed:
+			hwnd.append(win32gui.GetForegroundWindow())
+			return False
+	
+	
+	with MouseListener(on_click=on_click) as mouse_listener:
+		mouse_listener.join()
+
+	print('Window Selected: ', win32gui.GetWindowText(hwnd[0]))
+	time.sleep(0.5)
+	return hwnd[0]
+
+
 def get_start_awake_button_pos():
 	print('\nClick in the "start" awakening button! The first click will be considered.')
 	
@@ -87,6 +107,7 @@ def get_start_awake_button_pos():
 	with MouseListener(on_click=on_click) as mouse_listener:
 		mouse_listener.join()
 
+	time.sleep(0.5)
 	return start_awake_button_pos
 
 
@@ -110,13 +131,14 @@ def get_awake_area_pos():
 	with MouseListener(on_click=on_click) as mouse_listener:
 		mouse_listener.join()
 
+	time.sleep(0.5)
 	return awake_area_pos
 
 
-def click(x,y):
-	win32api.SetCursorPos((x,y))
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0)
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
+def right_click_window(hwnd, x, y):
+	lParam = win32api.MAKELONG(x, y)
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, lParam)
 # endregion
 
 
