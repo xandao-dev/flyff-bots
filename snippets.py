@@ -26,7 +26,7 @@ def take_screenshot(region=None):
 # Library: pywin32 -> import win32api, pywin32 -> import win32con
 def right_click(x, y):
     win32api.SetCursorPos((x, y))
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0) #mouse_event is deprecated, sendInput is better but pywin32 doesn't have
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
 
@@ -146,20 +146,27 @@ def get_focused_window_handle():
 
 # Right Click on window based on X and Y coordinates. The window doesn't need to be active. Very Fast.
 # Library: pywin32 -> import win32api, pywin32 -> import win32con
+# Need to use Microsoft Spy++(SpyXX) to simulate all messages depeding on the application
 def right_click_window(hwnd, x, y):
 	lParam = win32api.MAKELONG(x, y)
+	#win32api.SendMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+	#time.sleep(0.05)
+	#win32api.SendMessage(hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, lParam)
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+	time.sleep(0.05)
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, lParam)
 
 #endregion
 
 def main():
 	while 1:
-		print('FindWindow:', win32gui.FindWindow(None, 'Clockworks Flyff - xandao6'))
-		print('GetForegroundWindow:', win32gui.GetForegroundWindow())
-
-		print('GetWindowText: ', win32gui.GetWindowText(win32gui.FindWindow(None, 'Clockworks Flyff - xandao6')))
-		time.sleep(0.25)
+		hwnd = win32gui.FindWindow(None, 'Clockworks Flyff - xandao6')
+		print('GetWindowText: ', win32gui.GetWindowText(hwnd))
+		
+		#ENVIANDO F1 para o Flyff com sucesso
+		#win32api.PostMessage(hwnd, win32con.WM_KEYDOWN, 0x70, 0);
+		right_click_window(hwnd, 517, 314)
+		time.sleep(1)
 
 
 if __name__ == "__main__":
