@@ -2,16 +2,17 @@
 import time
 import re
 from pathlib import Path
-
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 from pytesseract import image_to_string
 from PIL import Image
 import keyboard
-import pyautogui
 import win32api
 import win32gui
 import win32con
+import win32ui
+import numpy as np
+import cv2 as cv
 #endregion
 
 """
@@ -35,32 +36,23 @@ Decreased Casting Time +(1 - 10)%
 
 awakening_interval = 0.95
 
-def main(debug=False):
+def main():
 	attribute = input('What is the attribute? ')
-	attribute2 = input('What is the attribute 2? ')
+	attribute2 = input('What is the attribute 2? ("." for empty) ')
+	if attribute2 == '.': attribute2 = attribute
 	min_value = int(input('What is the minimum value? '))
+
 	hwnd = get_focused_window_handle()
-	start_awake_button_pos = get_start_awake_button_pos()
-	awake_area_pos = get_awake_area_pos()
+	start_awake_button_pos = get_window_point(hwnd)
+	awake_area_pos = get_window_region(hwnd)
+
 	start_countdown(3)
 
 	print('\nHold "q" to stop the bot.')
 	while keyboard.is_pressed('q') == False:
-		#take a screenshot and convert to black/white
-		awake_area = pyautogui.screenshot(region=(awake_area_pos)).convert('1', dither=Image.NONE)
-
-		if debug:
-			#save screenshot to debug
-			awake_area.save(Path(__file__).parent/"awake.png") 
-
-		#get text and split in array
-		awake_text_list = image_to_string(awake_area, lang='eng').split('\n')
-
-		#Delete empty strings
-		awake_text_list = [i for i in awake_text_list if i.strip()]  
-
-		#Print the awake list
-		print(', '.join(awake_text_list))
+		awake_area = window_screenshot(hwnd, awake_area_pos)
+		awake_area_converted = image_convertion(awake_area)
+		awake_text_list = get_text_from_image(awake_area_converted)
 
 		# Search for the awake
 		for awake in awake_text_list:
@@ -73,6 +65,48 @@ def main(debug=False):
 		#click in awake button
 		right_click_window(hwnd, *start_awake_button_pos)
 		time.sleep(awakening_interval)
+
+
+# region Image
+def window_screenshot(hwnd, region):
+	x, y, width, height = region
+	wDC = win32gui.GetWindowDC(hwnd)
+	dcObj = win32ui.CreateDCFromHandle(wDC)
+	cDC = dcObj.CreateCompatibleDC()
+	dataBitMap = win32ui.CreateBitmap()
+	dataBitMap.CreateCompatibleBitmap(dcObj, width, height)
+	cDC.SelectObject(dataBitMap)
+	cDC.BitBlt((0, 0), (width, height), dcObj, (x, y), win32con.SRCCOPY)
+
+	bmpinfo = dataBitMap.GetInfo()
+	bmpstr = dataBitMap.GetBitmapBits(True)
+
+	img = Image.frombuffer(
+		'RGB',
+		(bmpinfo['bmWidth'], bmpinfo['bmHeight']),
+		bmpstr, 'raw', 'BGRX', 0, 1)
+
+	dcObj.DeleteDC()
+	cDC.DeleteDC()
+	win32gui.ReleaseDC(hwnd, wDC)
+	win32gui.DeleteObject(dataBitMap.GetHandle())
+
+	return img
+
+
+def image_convertion(pil_img):
+	return pil_img.convert('1', dither=Image.NONE) # Convert PIL img to bw
+
+
+def get_text_from_image(img):
+	# get text and split in array
+	text_list = image_to_string(img, lang='eng').split('\n')
+	# Delete empty strings
+	text_list = [i for i in text_list if i.strip()]
+	#Print the list
+	print(', '.join(text_list))
+	return text_list
+# endregion
 
 
 # region Mouse
@@ -94,51 +128,61 @@ def get_focused_window_handle():
 	return hwnd[0]
 
 
-def get_start_awake_button_pos():
+def get_window_point(hwnd):
 	print('\nClick in the "start" awakening button! The first click will be considered.')
-	
-	start_awake_button_pos = []
+	pos = []
+	x_win, y_win, cx_win, cy_win = win32gui.GetWindowRect(hwnd)
+
 	def on_click(x, y, button, pressed):
 		if pressed:
-			start_awake_button_pos.extend((x, y))
+			pos.extend((x - x_win, y - y_win))
 		if not pressed:
 			return False
-	
+
 	with MouseListener(on_click=on_click) as mouse_listener:
 		mouse_listener.join()
 
 	time.sleep(0.5)
-	return start_awake_button_pos
+	return pos
 
 
-def get_awake_area_pos():
+def get_window_region(hwnd, use_coordinates=False):
 	print("\nSelect the top-left corner of the white awakening area, then select the " +
-	"bottom-right corner.\nThe two first clicks will be considered.")
-	
-	awake_area_pos = []
+		  "bottom-right corner.\nThe two first clicks will be considered.")
+
+	region = []
+	absolute_position = []
 	is_first_click = [True]
+	x_win, y_win, cx_win, cy_win = win32gui.GetWindowRect(hwnd)
+
 	def on_click(x, y, button, pressed):
 		if pressed:
 			if is_first_click[0]:
-				awake_area_pos.extend((x, y))
+				region.extend((x - x_win, y - y_win))
+				absolute_position.extend((x, y))
 				is_first_click[0] = False
 			else:
-				width = x - awake_area_pos[0]
-				height = y - awake_area_pos[1]
-				awake_area_pos.extend((width, height))
+				if not use_coordinates:
+					width = x - absolute_position[0]
+					height = y - absolute_position[1]
+					region.extend((width, height))
+				else:
+					region.extend((x - x_win, y - y_win))
 				return False
-	
+
 	with MouseListener(on_click=on_click) as mouse_listener:
 		mouse_listener.join()
 
 	time.sleep(0.5)
-	return awake_area_pos
+	return region
 
 
 def right_click_window(hwnd, x, y):
 	lParam = win32api.MAKELONG(x, y)
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+	time.sleep(0.05)
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, lParam)
+	win32api.SendMessage(hwnd, win32con.WM_CAPTURECHANGED, None, None)
 # endregion
 
 
