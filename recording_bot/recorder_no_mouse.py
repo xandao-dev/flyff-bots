@@ -5,8 +5,6 @@ import os
 
 
 OUTPUT_FILENAME = 'tower_b5'
-# declare mouse_listener globally so that keyboard on_release can stop it
-mouse_listener = None
 # declare our start_time globally so that the callback functions can reference it
 start_time = None
 # keep track of unreleased keys to prevent over-reporting press events
@@ -17,7 +15,6 @@ input_events = []
 class EventType():
 	KEYDOWN = 'keyDown'
 	KEYUP = 'keyUp'
-	CLICK = 'click'
 
 
 def main():
@@ -42,19 +39,14 @@ def elapsed_time():
 	return time() - start_time
 
 
-def record_event(event_type, event_time, button, pos=None):
+def record_event(event_type, event_time, button):
 	global input_events
 	input_events.append({
 		'time': event_time,
 		'type': event_type,
-		'button': str(button),
-		'pos': pos
+		'button': str(button)
 	})
-
-	if event_type == EventType.CLICK:
-		print('{} on {} pos {} at {}'.format(event_type, button, pos, event_time))
-	else:
-		print('{} on {} at {}'.format(event_type, button, event_time))
+	print('{} on {} at {}'.format(event_type, button, event_time))
 
 
 def on_press(key):
@@ -85,30 +77,13 @@ def on_release(key):
 	except AttributeError:
 		record_event(EventType.KEYUP, elapsed_time(), key)
 
-	# stop listeners with the escape key
+	# stop listener with the escape key
 	if key == keyboard.Key.esc:
-		# Stop mouse listener
-		global mouse_listener
-		mouse_listener.stop()
 		# Stop keyboard listener
 		raise keyboard.Listener.StopException
 
 
-def on_click(x, y, button, pressed):
-	# when pressed is False, that means it's a release event.
-	# let's listen only to mouse click releases
-	if not pressed:
-		record_event(EventType.CLICK, elapsed_time(), button, (x, y))
-
-
 def runListeners():
-
-	# Collect mouse input events
-	global mouse_listener
-	mouse_listener = mouse.Listener(on_click=on_click)
-	mouse_listener.start()
-	mouse_listener.wait()  # wait for the listener to become ready
-
 	# Collect keyboard inputs until released
 	# https://pynput.readthedocs.io/en/latest/keyboard.html#monitoring-the-keyboard
 	with keyboard.Listener(
