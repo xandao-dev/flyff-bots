@@ -35,8 +35,6 @@ def main(debug=False):
 		break  # only executed if the inner loop DID break
 
 
-
-
 def get_enemy_life_pixel():
     """Get enemy life(red bar) pixel position and color
 

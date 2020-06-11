@@ -159,11 +159,13 @@ def pil_image_convertions(pil_img):
 
 # Extract text from image using OCR
 # Library: pytesseract.image_to_string, also need to install tesseract in computer and add to path.
-def get_text_from_image(pil_img):
+def get_text_from_image(img):
 	# get text and split in array
-	text_list = image_to_string(pil_img, lang='eng').split('\n')
+	text_list = image_to_string(img, lang='eng').split('\n')
 	# Delete empty strings
 	text_list = [i for i in text_list if i.strip()]
+	#Print the list
+	print(', '.join(text_list))
 	return text_list
 
 
@@ -211,13 +213,42 @@ def get_focused_window_handle():
 # Need to use Microsoft Spy++(SpyXX) to simulate all messages depeding on the application
 def right_click_window(hwnd, x, y):
 	lParam = win32api.MAKELONG(x, y)
-	#win32api.SendMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
-	# time.sleep(0.05)
-	#win32api.SendMessage(hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, lParam)
-	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN,
-						 win32con.MK_LBUTTON, lParam)
-	time.sleep(0.05)
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+	time.sleep(0.005)
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, lParam)
+
+
+# Save the mouse position, teleport the mouse, perform a click and then teleport the mouse to the original position
+# Library: pywin32 -> import win32api, pywin32 -> import win32con
+def magic_click(hwnd, x, y):
+	old_pos = win32api.GetCursorPos()
+	windll.user32.BlockInput(True)
+	win32api.SetCursorPos((x, y))
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, 0)
+	time.sleep(0.0025)
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, 0)
+	windll.user32.BlockInput(False)
+	win32api.SetCursorPos(old_pos)
+
+
+# Wait for one click in screen to get the point(x, y) relative to window
+# Library: from pynput.mouse import Listener as MouseListener, time
+def get_window_point(hwnd):
+	print("\nSelect the point. The first click will be considered.")
+	pos = []
+	x_win, y_win, cx_win, cy_win = win32gui.GetWindowRect(hwnd)
+
+	def on_click(x, y, button, pressed):
+		if pressed:
+			pos.extend((x - x_win, y - y_win))
+		if not pressed:
+			return False
+
+	with MouseListener(on_click=on_click) as mouse_listener:
+		mouse_listener.join()
+
+	time.sleep(0.5)
+	return pos
 
 
 # Wait for two click in screen to get the region relative to window(x, y, width, height). use_coordinate to return (x, y, cx, cy).
@@ -249,7 +280,6 @@ def get_window_region(hwnd, use_coordinates=False):
 	with MouseListener(on_click=on_click) as mouse_listener:
 		mouse_listener.join()
 
-	print(region)
 	time.sleep(0.5)
 	return region
 
@@ -297,12 +327,13 @@ def main():
 		hwnd = win32gui.FindWindow(None, 'Clockworks Flyff - xandao6')
 		print('GetWindowText: ', win32gui.GetWindowText(hwnd))
 
+		""" 	
 		region = get_window_region(hwnd)
-		start_countdown(2)
 		img = window_screenshot(hwnd, region, True)
-		converted_img = pil_image_convertions(img)
+		converted_img = image_convertion_test(img)
 		print(get_text_from_image(converted_img))
-		break
+		break 
+		"""
 
 		# ENVIANDO F1 para o Flyff com sucesso
 		#win32api.PostMessage(hwnd, win32con.WM_KEYDOWN, 0x70, 0);
