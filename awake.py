@@ -35,7 +35,7 @@ Additional Damage of Critical Hits +(1 - 19)%
 Decreased Casting Time +(1 - 10)%
 """
 
-awakening_interval = 0.95
+awakening_interval = 1
 
 def main():
 	attribute = input('What is the attribute? ')
@@ -185,11 +185,12 @@ def magic_click(hwnd, x, y):
 	windll.user32.BlockInput(True)
 	win32api.SetCursorPos((x, y))
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, 0)
-	time.sleep(0.003)
+	time.sleep(0.005)
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, 0)
-	time.sleep(0.007)
-	windll.user32.BlockInput(False)
+	time.sleep(0.015)
 	win32api.SetCursorPos(old_pos)
+	windll.user32.BlockInput(False)
+	
 # endregion
 
 
