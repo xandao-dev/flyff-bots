@@ -6,6 +6,7 @@ from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 from pytesseract import image_to_string
 from PIL import Image
+from ctypes import windll
 import keyboard
 import win32api
 import win32gui
@@ -49,6 +50,7 @@ def main():
 	start_countdown(3)
 
 	print('\nHold "q" to stop the bot.')
+	awake_count = 0
 	while keyboard.is_pressed('q') == False:
 		awake_area = window_screenshot(hwnd, awake_area_pos)
 		awake_area_converted = image_convertion(awake_area)
@@ -59,13 +61,14 @@ def main():
 			if attribute in awake or attribute2 in awake:
 				attr_value = int(re.findall('\d+', awake)[0])
 				if min_value <= attr_value:
-					print(f'\nFound: {awake}\n')
+					print(f'\nFound: {awake}')
+					print(f'Awake Count: {awake_count}\n')
 					exit()
 
 		#click in awake button
-		right_click_window(hwnd, *start_awake_button_pos)
+		magic_click(hwnd, *start_awake_button_pos)
 		time.sleep(awakening_interval)
-
+		awake_count += 1
 
 # region Image
 def window_screenshot(hwnd, region):
@@ -143,7 +146,7 @@ def get_window_point(hwnd):
 		mouse_listener.join()
 
 	time.sleep(0.5)
-	return pos
+	return (pos[0], pos[1] + 10)
 
 
 def get_window_region(hwnd, use_coordinates=False):
@@ -177,12 +180,16 @@ def get_window_region(hwnd, use_coordinates=False):
 	return region
 
 
-def right_click_window(hwnd, x, y):
-	lParam = win32api.MAKELONG(x, y)
-	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
-	time.sleep(0.05)
-	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, lParam)
-	win32api.SendMessage(hwnd, win32con.WM_CAPTURECHANGED, None, None)
+def magic_click(hwnd, x, y):
+	old_pos = win32api.GetCursorPos()
+	windll.user32.BlockInput(True)
+	win32api.SetCursorPos((x, y))
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, 0)
+	time.sleep(0.003)
+	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, 0)
+	time.sleep(0.007)
+	windll.user32.BlockInput(False)
+	win32api.SetCursorPos(old_pos)
 # endregion
 
 
