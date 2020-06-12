@@ -225,10 +225,11 @@ def magic_click(hwnd, x, y):
 	windll.user32.BlockInput(True)
 	win32api.SetCursorPos((x, y))
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, 0)
-	time.sleep(0.0025)
+	time.sleep(0.005)
 	win32api.PostMessage(hwnd, win32con.WM_LBUTTONUP, None, 0)
-	windll.user32.BlockInput(False)
+	time.sleep(0.015)
 	win32api.SetCursorPos(old_pos)
+	windll.user32.BlockInput(False)
 
 
 # Wait for one click in screen to get the point(x, y) relative to window
@@ -319,10 +320,23 @@ def window_screenshot(hwnd, region=None, save=False):
 		img.save('screenshot.png')
 	return img
 # endregion
+
+
+# Send a key down command to a window. Keys: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+# Library: pywin32 -> (win32api, win32con)
+def window_key_down(hwnd, key):
+	win32api.PostMessage(hwnd, win32con.WM_KEYDOWN, key, 0);
+
+
+# Send a key up command to a window. Keys: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+# Library: pywin32 -> (win32api, win32con)
+def window_key_up(hwnd, key):
+	win32api.PostMessage(hwnd, win32con.WM_KEYUP, key, 0);
 # endregion
 
 
 def main():
+	count = 0
 	while 1:
 		hwnd = win32gui.FindWindow(None, 'Clockworks Flyff - xandao6')
 		print('GetWindowText: ', win32gui.GetWindowText(hwnd))
@@ -332,13 +346,18 @@ def main():
 		img = window_screenshot(hwnd, region, True)
 		converted_img = image_convertion_test(img)
 		print(get_text_from_image(converted_img))
-		break 
+		break
 		"""
-
-		# ENVIANDO F1 para o Flyff com sucesso
-		#win32api.PostMessage(hwnd, win32con.WM_KEYDOWN, 0x70, 0);
-
-		time.sleep(1)
+		if count > 500:
+			window_key_down(hwnd, 0x44)
+			time.sleep(0.01)
+			window_key_up(hwnd, 0x44)
+			break
+		window_key_down(hwnd, 0x44)
+		time.sleep(0.005)
+		window_key_up(hwnd, 0x44)
+		time.sleep(0.01)
+		count += 1
 
 
 if __name__ == "__main__":
