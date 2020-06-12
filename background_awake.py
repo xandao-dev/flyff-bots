@@ -200,7 +200,7 @@ def start_countdown(sleep_time_sec=5):
     for i in range(10):
         print('.', end='')
         time.sleep(sleep_time_sec/10)
-    print('\nReady,forcing gnomes to work hard!')
+    print('\nReady, forcing dwarves to work!')
 
 
 def print_logo(text_logo: str):
