@@ -302,6 +302,8 @@ def window_screenshot(hwnd, region=None, save=False):
 	cDC.SelectObject(dataBitMap)
 	cDC.BitBlt((0, 0), (width, height), dcObj, (x, y), win32con.SRCCOPY)
 
+	dataBitMap.SaveBitmapFile(cDC, 'screenshot.bmp')
+
 	bmpinfo = dataBitMap.GetInfo()
 	bmpstr = dataBitMap.GetBitmapBits(True)
 
@@ -320,8 +322,6 @@ def window_screenshot(hwnd, region=None, save=False):
 	win32gui.ReleaseDC(hwnd, wDC)
 	win32gui.DeleteObject(dataBitMap.GetHandle())
 
-	#Get bmp image, the fastest way to get the image, but not converted.
-	#dataBitMap.SaveBitmapFile(cDC, 'screenshot.bmp')
 	if save:
 		img.save('screenshot.png')
 		#cv2.imwrite('screenshot.png', img)
@@ -344,10 +344,11 @@ def window_key_up(hwnd, key):
 
 def main():
 	count = 0
+	hwnd = win32gui.FindWindow(None, 'Clockworks Flyff - BalaNoAlvo')
+	print('GetWindowText: ', win32gui.GetWindowText(hwnd))
 	while 1:
-		hwnd = win32gui.FindWindow(None, 'Clockworks Flyff - xandao6')
-		print('GetWindowText: ', win32gui.GetWindowText(hwnd))
-
+		window_screenshot(hwnd)
+		break
 		""" 	
 		region = get_window_region(hwnd)
 		img = window_screenshot(hwnd, region, True)
@@ -355,6 +356,7 @@ def main():
 		print(get_text_from_image(converted_img))
 		break
 		"""
+		""" 		
 		if count > 500:
 			window_key_down(hwnd, 0x44)
 			time.sleep(0.01)
@@ -364,7 +366,8 @@ def main():
 		time.sleep(0.005)
 		window_key_up(hwnd, 0x44)
 		time.sleep(0.01)
-		count += 1
+		count += 1 
+		"""
 
 
 if __name__ == "__main__":
