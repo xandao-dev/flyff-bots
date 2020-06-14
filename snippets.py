@@ -288,7 +288,7 @@ def get_window_region(hwnd, use_coordinates=False):
 # Take screnshoot of a window even if it's in the background and save . Very fast.
 # Library: pywin32 -> (win32gui, win32ui, win32con), PIL.Image
 def window_screenshot(hwnd, region=None, save=False):
-	# region, first fixel then width and height
+	# region: first fixel then width and height
 	if not region:
 		x, y, cx, cy = win32gui.GetWindowRect(hwnd)
 		region = (0, 0, cx - x, cy - y)
@@ -305,19 +305,26 @@ def window_screenshot(hwnd, region=None, save=False):
 	bmpinfo = dataBitMap.GetInfo()
 	bmpstr = dataBitMap.GetBitmapBits(True)
 
+	# PIL Image
 	img = Image.frombuffer(
 		'RGB',
 		(bmpinfo['bmWidth'], bmpinfo['bmHeight']),
 		bmpstr, 'raw', 'BGRX', 0, 1)
+
+	# Numpy Image -> The fastest way to convert to OpenCV
+	#img = np.fromstring(bmpstr, dtype='uint8')
+	#img.shape = (height, width, 4)
 
 	dcObj.DeleteDC()
 	cDC.DeleteDC()
 	win32gui.ReleaseDC(hwnd, wDC)
 	win32gui.DeleteObject(dataBitMap.GetHandle())
 
+	#Get bmp image, the fastest way to get the image, but not converted.
 	#dataBitMap.SaveBitmapFile(cDC, 'screenshot.bmp')
 	if save:
 		img.save('screenshot.png')
+		#cv2.imwrite('screenshot.png', img)
 	return img
 # endregion
 

@@ -1,3 +1,8 @@
+"""Foreground Vision Farm
+
+Farm aproach: Using OpenCV it will track the shadow of the mob Batto(lv 150) in Neo Casdadia.
+"""
+
 # region Imports
 import time
 from pathlib import Path
@@ -17,22 +22,7 @@ import win32con
 def main(debug=False):
 	enemy_life_pixel = get_enemy_life_pixel()
 	x_battle, y_battle, x1_battle, y1_battle = get_battle_area_pos(use_coordinates=True)
-	for x in range(x_battle, x1_battle, 20):
-		for y in range(y_battle, y1_battle, 20):
-			time.sleep(0.01)
-			move_cursor(x, y)
-			if pyautogui.pixelMatchesColor(
-					enemy_life_pixel[0],
-					enemy_life_pixel[1],
-					enemy_life_pixel[2],
-					3):
-				print('Mob found!')
-				right_click(x, y, True)
-				keyboard.press('F1')
-				break
-		else:
-			continue  # only executed if the inner loop did NOT break
-		break  # only executed if the inner loop DID break
+
 
 
 def get_enemy_life_pixel():

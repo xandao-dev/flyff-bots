@@ -8,7 +8,6 @@ from ctypes import windll
 
 
 def main():
-
 	hwnd = get_focused_window_handle()
 	start_countdown(3)
 

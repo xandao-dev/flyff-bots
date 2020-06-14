@@ -1,22 +1,15 @@
 import pyautogui
-from time import sleep, time
 import os
 import json
+from time import sleep, time
+from pyfiglet import Figlet
 
 
 def main():
-	
 	initializePyAutoGUI()
-	countdownTimer()
+	start_countdown(3)
 
-	playActions("earthstation_goto_trader.json")
-	sleep(2.00)
-	playActions("earthstation_do_trading.json")
-	sleep(2.00)  # After trading wait for zoom out animation to finish
-	playActions("earthstation_goto_ship.json")
-	sleep(10.00)  # Allow time for the outside world to load
-	playActions("earthstation_goto_lokistation.json")
-
+	playActions("tower_b5.json")
 	print("Done")
 
 
@@ -25,15 +18,6 @@ def initializePyAutoGUI():
 	# https://pyautogui.readthedocs.io/en/latest/introduction.html
 	# When fail-safe mode is True, moving the mouse to the upper-left corner will abort your program.
 	pyautogui.FAILSAFE = True
-
-
-def countdownTimer():
-	# Countdown timer
-	print("Starting", end="", flush=True)
-	for i in range(0, 10):
-		print(".", end="", flush=True)
-		sleep(1)
-	print("Go")
 
 
 def playActions(filename):
@@ -120,5 +104,23 @@ def convertKey(button):
 	return cleaned_key
 
 
+# region Helpers
+def start_countdown(sleep_time_sec=5):
+    print('Starting', end='', flush=True)
+    for i in range(10):
+        print('.', end='', flush=True)
+        sleep(sleep_time_sec/10)
+    print('\nReady, forcing dwarves to work!')
+
+
+def print_logo(text_logo: str):
+    figlet = Figlet(font='slant')
+    print(figlet.renderText(text_logo))
+# endregion
+
 if __name__ == "__main__":
-	main()
+    try:
+        print_logo('Background Playback Bot')
+        main()
+    except Exception as e:
+        print(str(e))
