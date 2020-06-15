@@ -8,61 +8,70 @@ from pathlib import Path
 from time import time, sleep
 
 import cv2 as cv
-import keyboard
 import numpy as np
 import pyautogui
+import pyttsx3
 import win32api
 import win32con
 import win32gui
+from ctypes import windll
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 from pytesseract import image_to_string
 
 from windowcapture import WindowCapture
 
+#Confs & Paths
+debug = False
+mob_height_offset = 120
+sleep_time_to_check_enemy_existence = 0.5
+monster_kill_goal = 7
+
+mob_name_path = str(Path(__file__).parent/'names'/'batto.png')
+mob_full_life_path = str(Path(__file__).parent/'assets'/'mob_full_life.png')
+user_target_bar_path = str(Path(__file__).parent /
+						   'assets'/'user_target_bar.png')
+
 
 def main(debug=False):
-	hwnd = get_focused_window_handle()
-	enemy_life_pixel = get_enemy_life_pixel()
-
+	voice_engine = pyttsx3.init()
+	hwnd = get_focused_window_handle(voice_engine)
 	wincap = WindowCapture(hwnd)
-	needle_img_path = str(Path(__file__).parent/'names'/'name.png')
-	needle_img = cv.imread(needle_img_path, cv.IMREAD_GRAYSCALE)
 
-	start_countdown(3)
+	needle_img = cv.imread(mob_name_path, cv.IMREAD_GRAYSCALE)
+	mob_full_life = cv.imread(mob_full_life_path, cv.IMREAD_GRAYSCALE)
+	user_target_bar = cv.imread(user_target_bar_path, cv.IMREAD_GRAYSCALE)
+
+	start_countdown(voice_engine, 3)
 
 	mosters_killed = 0
 	loop_time = time()
 	while(True):
 		screenshot = wincap.get_screenshot()
+		screenshot = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
 
-		if debug:
-			points, img = findClickPositions(
-				needle_img, screenshot, mob_height_offset=120, debug_mode='points')
+		if not debug:
+			points = get_mobs_position(
+				needle_img, screenshot, mob_height_offset=mob_height_offset)
+		else:
+			points = get_mobs_position(
+				needle_img, screenshot, mob_height_offset=mob_height_offset, debug_mode='points')
 			print(points)
-			img_resized = cv.resize(img, (975, 548))
-			cv.imshow('Computer Vision', img_resized)
 
 			print('FPS {}'.format(round(1 / (time() - loop_time))))
 			loop_time = time()
-		else:
-			points, img = findClickPositions(
-				needle_img, screenshot, mob_height_offset=120)
 
 		if points:
-			move_cursor(*points[0])
-			if pyautogui.pixelMatchesColor(
-					enemy_life_pixel[0],
-					enemy_life_pixel[1],
-					enemy_life_pixel[2],
-					3):
+			mob_pos = *points[len(round(points/2))]
+			move_cursor(mob_pos)
+			if check_mob_existence(mob_full_life, screenshot):
 				print('Mob found!')
-				right_click(*points[0], True)
-				keyboard.press('F1')
+				right_click(mob_pos)
+				press_key(hwnd, win32con.VK_F1)
 				mosters_killed += 1
-				sleep(3)
-		
-		if mosters_killed > 5:
+				#sleep(5) 
+
+		if mosters_killed > monster_kill_goal:
 			break
 
 		if cv.waitKey(1) == ord('q'):
@@ -70,9 +79,50 @@ def main(debug=False):
 			break
 
 
-def findClickPositions(needle_img, screenshot, mob_height_offset=80, threshold=0.6, debug_mode=None):
-	screenshot = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
+def get_focused_window_handle(voice_engine):
+	print('\nClick in the flyff window to get the process! The first click will be considered.')
+	voice_engine.say('Selecione a tela do jogo')
 
+	hwnd = []
+
+	def on_click(x, y, button, pressed):
+		if not pressed:
+			hwnd.append(win32gui.GetForegroundWindow())
+			return False
+
+	voice_engine.runAndWait()
+	with MouseListener(on_click=on_click) as mouse_listener:
+		mouse_listener.join()
+
+	print('Window Selected: ', win32gui.GetWindowText(hwnd[0]))
+	sleep(0.5)
+	return hwnd[0]
+
+
+def get_enemy_life_pixel():
+	"""Get enemy life(red bar) pixel position and color
+
+	Returns:
+									List: 0-> x, 1-> y, 2-> (rbg)
+	"""
+	print('\nClick inside the life enemy life to get the pixel color.')
+
+	enemy_life_pixel = []
+
+	def on_click(x, y, button, pressed):
+		if pressed:
+			enemy_life_pixel.extend((x, y, pyautogui.pixel(x, y)))
+		if not pressed:
+			return False
+
+	with MouseListener(on_click=on_click) as mouse_listener:
+		mouse_listener.join()
+
+	sleep(0.5)
+	return enemy_life_pixel
+
+
+def get_mobs_position(needle_img, screenshot, mob_height_offset=80, threshold=0.6, debug_mode=None):
 	# Save the dimensions of the needle image
 	needle_w = needle_img.shape[1]
 	needle_h = needle_img.shape[0]
@@ -131,94 +181,123 @@ def findClickPositions(needle_img, screenshot, mob_height_offset=80, threshold=0
 				# Draw the box
 				cv.rectangle(screenshot, top_left, bottom_right, color=line_color,
 							 lineType=line_type, thickness=2)
+				img_resized = cv.resize(screenshot, (975, 548))
+				cv.imshow('Computer Vision', img_resized)
 			elif debug_mode == 'points':
 				# Draw the center point
 				cv.drawMarker(screenshot, (center_x, center_y),
 							  color=marker_color, markerType=marker_type,
 							  markerSize=40, thickness=2)
+				# cv.putText(screenshot, f'({center_x}, {center_y})', (x+w, y+h),
+				#		   cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+				img_resized = cv.resize(screenshot, (975, 548))
+				cv.imshow('Computer Vision', img_resized)
 
-	return points, screenshot
-
-
-def get_enemy_life_pixel():
-	"""Get enemy life(red bar) pixel position and color
-
-	Returns:
-					List: 0-> x, 1-> y, 2-> (rbg)
-	"""
-	print('\nClick inside the life enemy life to get the pixel color.')
-
-	enemy_life_pixel = []
-
-	def on_click(x, y, button, pressed):
-		if pressed:
-			enemy_life_pixel.extend((x, y, pyautogui.pixel(x, y)))
-		if not pressed:
-			return False
-
-	with MouseListener(on_click=on_click) as mouse_listener:
-		mouse_listener.join()
-
-	sleep(0.5)
-	return enemy_life_pixel
+	return points
 
 
-def move_cursor(x, y):
-	win32api.SetCursorPos((x, y))
+def check_mob_existence(mob_full_life, screenshot, threshold=0.8, debug=False):
+	# Save the dimensions of the screenshot image
+	screenshot_w = screenshot.shape[1]
+	screenshot_h = screenshot.shape[0]
+
+	# Get the top of the screen to see if the mob life bar exists
+	croped_img = screenshot[0:0+50, 200:screenshot_w-200]
+
+	if debug:
+		cv.imshow("cropped", croped_img)
+		cv.waitKey(0)
+
+	# There are 6 methods to choose from:
+	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
+	method = cv.TM_CCOEFF_NORMED
+	result = cv.matchTemplate(croped_img, mob_full_life, method)
+
+	# Get the best match position from the match result.
+	min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
+	if max_val >= threshold:
+		return True
+	else:
+		return False
 
 
-def right_click(x, y, set_position=True):
-	if set_position:
-		win32api.SetCursorPos((x, y))
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+def atack_mob():
+	pass
 
 
-def double_right_click(x, y, set_position=True):
-	if set_position:
-		win32api.SetCursorPos((x, y))
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+def check_mob_still_alive(mob_full_life, screenshot, threshold=0.8, debug=False):
+	# Save the dimensions of the screenshot image
+	screenshot_w = screenshot.shape[1]
+	screenshot_h = screenshot.shape[0]
+
+	# Get the top of the screen to see if the mob life bar exists
+	croped_img = screenshot[0:0+50, 200:screenshot_w-200]
+
+	if debug:
+		cv.imshow("cropped", croped_img)
+		cv.waitKey(0)
+
+	# There are 6 methods to choose from:
+	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
+	method = cv.TM_CCOEFF_NORMED
+	result = cv.matchTemplate(croped_img, mob_full_life, method)
+
+	# Get the best match position from the match result.
+	min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
+	if max_val >= threshold:
+		return True
+	else:
+		return False
 
 
-def get_focused_window_handle():
-	print('\nClick in the flyff window to get the process! The first click will be considered.')
-
-	hwnd = []
-
-	def on_click(x, y, button, pressed):
-		if not pressed:
-			hwnd.append(win32gui.GetForegroundWindow())
-			return False
-
-	with MouseListener(on_click=on_click) as mouse_listener:
-		mouse_listener.join()
-
-	print('Window Selected: ', win32gui.GetWindowText(hwnd[0]))
-	sleep(0.5)
-	return hwnd[0]
+def search_new_mobs():
+	pass
 
 
 # region Helpers
-def start_countdown(sleep_time_sec=5):
+def start_countdown(voice_engine, sleep_time_sec=5):
+	voice_engine.say(f'Iniciando em {sleep_time_sec} segundos')
+	voice_engine.runAndWait()
 	print('Starting', end='')
 	for i in range(10):
 		print('.', end='')
 		sleep(sleep_time_sec/10)
-	print('\nReady, forcing gnomes to work hard!')
+	print('\nReady, forcing dwarves to work!')
 
 
 def print_logo(text_logo: str):
 	figlet = Figlet(font='slant')
 	print(figlet.renderText(text_logo))
+
+
+def move_cursor(x, y, sleep_time=0.05):
+	win32api.SetCursorPos((x, y))
+	sleep(sleep_time)
+
+
+def right_click(x, y, set_position=False):
+	if set_position:
+		win32api.SetCursorPos((x, y))
+		sleep(0.05)
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+	sleep(0.015)
+	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+
+
+# Keys: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+def press_key(hwnd, key, press_time=0.2):
+	# 1/0.015-> Time average for each iteration
+	for i in range(round(press_time*(1/0.015))):
+		win32api.PostMessage(hwnd, win32con.WM_KEYDOWN, key, 0)
+		sleep(0.005)
+		win32api.PostMessage(hwnd, win32con.WM_KEYUP, key, 0)
+		sleep(0.01)
 # endregion
 
 
 if __name__ == '__main__':
 	try:
 		print_logo('Flyff Farm Bot')
-		main()
+		main(debug)
 	except Exception as e:
 		print(str(e))
