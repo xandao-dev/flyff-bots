@@ -29,26 +29,27 @@ monster_kill_goal = 7
 
 mob_name_path = str(Path(__file__).parent/'names'/'batto.png')
 mob_full_life_path = str(Path(__file__).parent/'assets'/'mob_full_life.png')
-user_target_bar_path = str(Path(__file__).parent /
-						   'assets'/'user_target_bar.png')
+mob_type_path = str(Path(__file__).parent / 'assets'/'mob_type_wind.png')
 
 
 def main(debug=False):
 	voice_engine = pyttsx3.init()
 	hwnd = get_focused_window_handle(voice_engine)
-	wincap = WindowCapture(hwnd)
+	window_capture = WindowCapture(hwnd)
 
 	needle_img = cv.imread(mob_name_path, cv.IMREAD_GRAYSCALE)
 	mob_full_life = cv.imread(mob_full_life_path, cv.IMREAD_GRAYSCALE)
-	user_target_bar = cv.imread(user_target_bar_path, cv.IMREAD_GRAYSCALE)
+	mob_type = cv.imread(mob_type_path, cv.IMREAD_GRAYSCALE)
 
 	start_countdown(voice_engine, 3)
 
 	mosters_killed = 0
 	loop_time = time()
 	while(True):
-		screenshot = wincap.get_screenshot()
+		screenshot = window_capture.get_screenshot()
 		screenshot = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
+		# Get the top of the screen
+		top_image = screenshot[0:0+50, 200:screenshot.shape[1]-200]
 
 		if not debug:
 			points = get_mobs_position(
@@ -62,16 +63,19 @@ def main(debug=False):
 			loop_time = time()
 
 		if points:
-			mob_pos = *points[len(round(points/2))]
-			move_cursor(mob_pos)
-			if check_mob_existence(mob_full_life, screenshot):
-				print('Mob found!')
-				right_click(mob_pos)
+			mob_pos = points[round(len(points)/2)]
+			move_cursor(*mob_pos)
+			if check_mob_existence(mob_full_life, top_image):
+				right_click(*mob_pos)
 				press_key(hwnd, win32con.VK_F1)
 				mosters_killed += 1
-				#sleep(5) 
+				while True:
+					if not check_mob_still_alive(mob_type, window_capture):
+						break
+					else:
+						sleep(0.5)
 
-		if mosters_killed > monster_kill_goal:
+		if mosters_killed >= monster_kill_goal:
 			break
 
 		if cv.waitKey(1) == ord('q'):
@@ -196,26 +200,20 @@ def get_mobs_position(needle_img, screenshot, mob_height_offset=80, threshold=0.
 	return points
 
 
-def check_mob_existence(mob_full_life, screenshot, threshold=0.8, debug=False):
-	# Save the dimensions of the screenshot image
-	screenshot_w = screenshot.shape[1]
-	screenshot_h = screenshot.shape[0]
-
-	# Get the top of the screen to see if the mob life bar exists
-	croped_img = screenshot[0:0+50, 200:screenshot_w-200]
-
+def check_mob_existence(mob_full_life, top_image, threshold=0.8, debug=False):
 	if debug:
-		cv.imshow("cropped", croped_img)
+		cv.imshow("Mob Exists?", top_image)
 		cv.waitKey(0)
 
 	# There are 6 methods to choose from:
 	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
 	method = cv.TM_CCOEFF_NORMED
-	result = cv.matchTemplate(croped_img, mob_full_life, method)
+	result = cv.matchTemplate(top_image, mob_full_life, method)
 
 	# Get the best match position from the match result.
 	min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
 	if max_val >= threshold:
+		print('Mob found!')
 		return True
 	else:
 		return False
@@ -225,28 +223,30 @@ def atack_mob():
 	pass
 
 
-def check_mob_still_alive(mob_full_life, screenshot, threshold=0.8, debug=False):
-	# Save the dimensions of the screenshot image
-	screenshot_w = screenshot.shape[1]
-	screenshot_h = screenshot.shape[0]
-
+#Check if the mob type icon is visible
+def check_mob_still_alive(mob_type, window_capture, threshold=0.8, debug=False):
+	# Take a new screenshot to verify the fight status
+	screenshot = window_capture.get_screenshot()
+	screenshot = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
 	# Get the top of the screen to see if the mob life bar exists
-	croped_img = screenshot[0:0+50, 200:screenshot_w-200]
+	top_image = screenshot[0:0+50, 200:screenshot.shape[1]-200]
 
 	if debug:
-		cv.imshow("cropped", croped_img)
+		cv.imshow("Mob Still Alive?", top_image)
 		cv.waitKey(0)
 
 	# There are 6 methods to choose from:
 	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
 	method = cv.TM_CCOEFF_NORMED
-	result = cv.matchTemplate(croped_img, mob_full_life, method)
+	result = cv.matchTemplate(top_image, mob_type, method)
 
 	# Get the best match position from the match result.
 	min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
 	if max_val >= threshold:
+		print('Mob still alive')
 		return True
 	else:
+		print('No mob selected')
 		return False
 
 
@@ -296,8 +296,5 @@ def press_key(hwnd, key, press_time=0.2):
 
 
 if __name__ == '__main__':
-	try:
-		print_logo('Flyff Farm Bot')
-		main(debug)
-	except Exception as e:
-		print(str(e))
+	print_logo('Flyff Farm Bot')
+	main(debug)
