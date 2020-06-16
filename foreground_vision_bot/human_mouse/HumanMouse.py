@@ -6,32 +6,37 @@ import win32api, win32con
 from human_mouse.HumanCurve import HumanCurve
 
 
-class HumanMouse():
+class HumanMouse:
 	def __init__(self):
-		pass
+		self.w = win32api.GetSystemMetrics(0)
+		self.h = win32api.GetSystemMetrics(1)
+		self.outside_points = ((0, 0), (self.w, 0), (0, self.h), (self.w, self.h), 
+							   (round(self.w/2), 0), (0, round(self.h/2)), 
+							   (self.w, round(self.h/2)), (round(self.w/2), self.h))
 
-	def move(self, toPoint, duration=1, humanCurve=None):
-		fromPoint = win32api.GetCursorPos()
-		if not humanCurve:
-			humanCurve = HumanCurve(fromPoint, toPoint)
+	def move(self, to_point, from_point=None, duration=0.5, human_curve=None):
+		if not from_point:
+			from_point = win32api.GetCursorPos()
+		if not human_curve:
+			human_curve = HumanCurve(from_point, to_point, targetPoints=25)
 
-		for point in humanCurve.points:
-			win32api.SetCursorPos((int(point[0]), int(point[1])))
-			sleep(duration / len(humanCurve.points))
+		for point in human_curve.points:
+			win32api.SetCursorPos((int(round(point[0])), int(round(point[1]))))
+			sleep(round(duration / len(human_curve.points), 3))
 
-	def move_random_corner(self, duration=0.5, humanCurve=None):
-		w = win32api.GetSystemMetrics(0)
-		h = win32api.GetSystemMetrics(1)
+	def move_outside_game(self, from_point=None, duration=0.5, human_curve=None):
+		if not from_point:
+			from_point = win32api.GetCursorPos()
+		if not human_curve:
+			human_curve = HumanCurve(
+				from_point, 
+				self.outside_points[randint(0, len(self.outside_points)-1)], 
+				targetPoints=25
+			)
 
-		corners = ((0, 0), (0, w), (0, h), (w, h))
-
-		fromPoint = win32api.GetCursorPos()
-		if not humanCurve:
-			humanCurve = HumanCurve(fromPoint, corners[randint(0, 3)])
-
-		for point in humanCurve.points:
-			win32api.SetCursorPos((int(point[0]), int(point[1])))
-			sleep(duration / len(humanCurve.points))
+		for point in human_curve.points:
+			win32api.SetCursorPos((int(round(point[0])), int(round(point[1]))))
+			sleep(round(duration / len(human_curve.points), 3))
 
 	def move_like_robot(self, pos, sleep_time=0.05):
 		win32api.SetCursorPos(pos)

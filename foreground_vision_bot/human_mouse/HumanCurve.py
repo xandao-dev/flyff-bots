@@ -30,12 +30,12 @@ class HumanCurve():
 		knotsCount = kwargs.get("knotsCount", 2)
 		distortionMean = kwargs.get("distortionMean", 1)
 		distortionStdev = kwargs.get("distortionStdev", 1)
-		distortionFrequency = kwargs.get("distortionFrequency", 0.5)
+		distortionFrequency = kwargs.get("distortionFrequency", 0.25)
 		tween = kwargs.get("tweening", pytweening.easeOutQuad)
 		targetPoints = kwargs.get("targetPoints", 100)
 
-		internalKnots = self.generateInternalKnots(int(leftBoundary), int(rightBoundary), \
-			int(downBoundary), int(upBoundary), int(knotsCount))
+		internalKnots = self.generateInternalKnots(int(round(leftBoundary)), int(round(rightBoundary)), \
+			int(round(downBoundary)), int(round(upBoundary)), int(round(knotsCount)))
 		points = self.generatePoints(internalKnots)
 		points = self.distortPoints(points, distortionMean, distortionStdev, distortionFrequency)
 		points = self.tweenPoints(points, tween, targetPoints)
