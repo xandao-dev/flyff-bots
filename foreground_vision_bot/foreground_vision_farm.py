@@ -14,12 +14,15 @@ import pyttsx3
 import win32api
 import win32con
 import win32gui
+from random import randint, choice
+from math import ceil
 from ctypes import windll
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 from pytesseract import image_to_string
 
-from windowcapture import WindowCapture
+from WindowCapture import WindowCapture
+from human_mouse.HumanMouse import HumanMouse
 
 #Confs & Paths
 debug = False
@@ -27,7 +30,7 @@ mob_height_offset = 120
 sleep_time_to_check_enemy_existence = 0.5
 monster_kill_goal = 7
 
-mob_name_path = str(Path(__file__).parent/'names'/'batto.png')
+mob_name_path = str(Path(__file__).parent/'assets'/'names'/'batto.png')
 mob_full_life_path = str(Path(__file__).parent/'assets'/'mob_full_life.png')
 mob_type_path = str(Path(__file__).parent / 'assets'/'mob_type_wind.png')
 
@@ -36,6 +39,7 @@ def main(debug=False):
 	voice_engine = pyttsx3.init()
 	hwnd = get_focused_window_handle(voice_engine)
 	window_capture = WindowCapture(hwnd)
+	human_mouse = HumanMouse()
 
 	needle_img = cv.imread(mob_name_path, cv.IMREAD_GRAYSCALE)
 	mob_full_life = cv.imread(mob_full_life_path, cv.IMREAD_GRAYSCALE)
@@ -64,13 +68,14 @@ def main(debug=False):
 
 		if points:
 			mob_pos = points[round(len(points)/2)]
-			move_cursor(*mob_pos)
+			human_mouse.move(mob_pos, 0.1)
 			if check_mob_existence(mob_full_life, top_image):
-				right_click(*mob_pos)
+				human_mouse.right_click(mob_pos)
 				press_key(hwnd, win32con.VK_F1)
-				mosters_killed += 1
+				human_mouse.move_random_corner(0.1)
 				while True:
 					if not check_mob_still_alive(mob_type, window_capture):
+						mosters_killed += 1
 						break
 					else:
 						sleep(0.5)
@@ -268,20 +273,6 @@ def start_countdown(voice_engine, sleep_time_sec=5):
 def print_logo(text_logo: str):
 	figlet = Figlet(font='slant')
 	print(figlet.renderText(text_logo))
-
-
-def move_cursor(x, y, sleep_time=0.05):
-	win32api.SetCursorPos((x, y))
-	sleep(sleep_time)
-
-
-def right_click(x, y, set_position=False):
-	if set_position:
-		win32api.SetCursorPos((x, y))
-		sleep(0.05)
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-	sleep(0.015)
-	win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
 
 # Keys: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
