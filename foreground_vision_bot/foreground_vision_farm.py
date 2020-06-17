@@ -36,7 +36,7 @@ def main(debug=False):
 
 	mosters_killed = 0
 	loop_time = time()
-	while(True):
+	while True:
 		screenshot = window_capture.get_screenshot()
 		screenshot = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
 		# Get the top of the screen
@@ -54,9 +54,11 @@ def main(debug=False):
 			loop_time = time()
 	
 		if points:
-			mobs_available_on_screen()
+			monsters_killed = mobs_available_on_screen(
+				mouse, keyboard, window_capture, top_image, points, mosters_killed
+			)
 		else:
-			mobs_not_available_on_screen()
+			mobs_not_available_on_screen(keyboard)
 
 		if mosters_killed >= monster_kill_goal:
 			break
@@ -145,7 +147,8 @@ def get_mobs_position(needle_img, screenshot, mob_height_offset=80, threshold=0.
 	return points
 
 
-def mobs_available_on_screen():
+def mobs_available_on_screen(mouse, keyboard, window_capture, top_image, points, mosters_killed):
+	mosters_count = mosters_killed
 	mob_pos = points[round(len(points)/2)]
 	mouse.move(to_point=mob_pos, duration=0.1)
 	if check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
@@ -154,15 +157,16 @@ def mobs_available_on_screen():
 		fight_time = time()
 		while True:
 			if not check_mob_still_alive(MobTypes.WATER, window_capture):
-				mosters_killed += 1
+				mosters_count += 1
 				break
 			else:
 				if (time() - fight_time) >= fight_time_limit:
 					break
 				sleep(time_check_mob_still_alive)
+	return mosters_count
 
 
-def mobs_not_available_on_screen():
+def mobs_not_available_on_screen(keyboard):
 	print('No Mobs in Area')
 	keyboard.human_turn_back()
 	keyboard.press_key(VKEY['w'], press_time=3)
