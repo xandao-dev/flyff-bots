@@ -1,40 +1,28 @@
 """Foreground Vision Farm
 
 Farm aproach: Using OpenCV it will track the name of the mob.
-Currently I'm aiming to Batto(lv 150) in Neo Casdadia.
+Currently I'm aiming to all lv 150 mobs in Neo Casdadia.
 """
-
-from pathlib import Path
 from time import time, sleep
 
 import cv2 as cv
 import numpy as np
-import pyautogui
 import pyttsx3
-import win32api
 import win32con
 import win32gui
-from random import randint
-from ctypes import windll
-from pyfiglet import Figlet
-from pynput.mouse import Listener as MouseListener
-from pytesseract import image_to_string
 
 from WindowCapture import WindowCapture
 from human_mouse.HumanMouse import HumanMouse
 from HumanKeyboard import HumanKeyboard, VKEY
+from assets.Assets import MobNames, MobTypes, GeneralAssets
+from helpers import start_countdown, print_logo, get_focused_window_handle
 
 #Confs & Paths
-debug = False
+debug = True
 mob_height_offset = 125
 time_check_mob_still_alive = 0.25
-monster_kill_goal = 99999
+monster_kill_goal = 3
 fight_time_limit = 8
-
-mob_name_path = str(Path(__file__).parent/'assets'/'names'/'batto.png')
-mob_full_life_path = str(Path(__file__).parent/'assets'/'mob_full_life.png')
-mob_type_path = str(Path(__file__).parent / 'assets'/'mob_type_wind.png')
-user_target_bar_path = str(Path(__file__).parent / 'assets'/'user_target_bar.png')
 
 
 def main(debug=False):
@@ -43,11 +31,6 @@ def main(debug=False):
 	window_capture = WindowCapture(hwnd)
 	mouse = HumanMouse()
 	keyboard = HumanKeyboard(hwnd)
-
-	needle_img = cv.imread(mob_name_path, cv.IMREAD_GRAYSCALE)
-	mob_full_life = cv.imread(mob_full_life_path, cv.IMREAD_GRAYSCALE)
-	mob_type = cv.imread(mob_type_path, cv.IMREAD_GRAYSCALE)
-	user_target_bar = cv.imread(user_target_bar_path, cv.IMREAD_GRAYSCALE)
 
 	start_countdown(voice_engine, 3)
 
@@ -61,34 +44,19 @@ def main(debug=False):
 
 		if not debug:
 			points = get_mobs_position(
-				needle_img, screenshot, mob_height_offset=mob_height_offset)
+				MobNames.ROSPOSA, screenshot, mob_height_offset=mob_height_offset)
 		else:
 			points = get_mobs_position(
-				needle_img, screenshot, mob_height_offset=mob_height_offset, debug_mode='points')
-			print(points)
+				MobNames.ROSPOSA, screenshot, mob_height_offset=mob_height_offset, debug_mode='points')
+			#print(points)
 
 			print('FPS {}'.format(round(1 / (time() - loop_time))))
 			loop_time = time()
-
+	
 		if points:
-			mob_pos = points[round(len(points)/2)]
-			mouse.move(to_point=mob_pos, duration=0.1)
-			if check_mob_existence(mob_full_life, top_image):
-				mouse.right_click(mob_pos)
-				keyboard.press_key(win32con.VK_F1, press_time=0.06)
-				fight_time = time()
-				while True:
-					if not check_mob_still_alive(mob_type, user_target_bar, window_capture):
-						mosters_killed += 1
-						break
-					else:
-						if (time() - fight_time) >= fight_time_limit:
-							break 
-						sleep(time_check_mob_still_alive)
+			mobs_available_on_screen()
 		else:
-			print('No Mobs in Area')
-			keyboard.human_turn_back()
-			#keyboard.press_key(VKEY['w'], press_time=3)
+			mobs_not_available_on_screen()
 
 		if mosters_killed >= monster_kill_goal:
 			break
@@ -98,26 +66,6 @@ def main(debug=False):
 			break
 
 
-def get_focused_window_handle(voice_engine):
-	print('\nClick in the flyff window to get the process! The first click will be considered.')
-	voice_engine.say('Selecione a tela do jogo')
-
-	hwnd = []
-
-	def on_click(x, y, button, pressed):
-		if not pressed:
-			hwnd.append(win32gui.GetForegroundWindow())
-			return False
-
-	voice_engine.runAndWait()
-	with MouseListener(on_click=on_click) as mouse_listener:
-		mouse_listener.join()
-
-	print('Window Selected: ', win32gui.GetWindowText(hwnd[0]))
-	sleep(0.5)
-	return hwnd[0]
-
-
 def get_mobs_position(needle_img, screenshot, mob_height_offset=80, threshold=0.6, debug_mode=None):
 	# Save the dimensions of the needle image and the screenshot
 	needle_w = needle_img.shape[1]
@@ -125,7 +73,7 @@ def get_mobs_position(needle_img, screenshot, mob_height_offset=80, threshold=0.
 	scrshot_w = screenshot.shape[1]
 	scrshot_h = screenshot.shape[0]
 
-	#Cut the skills bar on the bottom and the claim rewards button on the left side.
+	# Cut the skills bar on the bottom and the claim rewards button on the left side.
 	screenshot_crop = screenshot[0:needle_h-55, 40:scrshot_w]
 
 	# There are 6 methods to choose from:
@@ -197,7 +145,30 @@ def get_mobs_position(needle_img, screenshot, mob_height_offset=80, threshold=0.
 	return points
 
 
-def check_mob_existence(mob_full_life, top_image, threshold=0.8, debug=False):
+def mobs_available_on_screen():
+	mob_pos = points[round(len(points)/2)]
+	mouse.move(to_point=mob_pos, duration=0.1)
+	if check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
+		mouse.right_click(mob_pos)
+		keyboard.press_key(win32con.VK_F1, press_time=0.06)
+		fight_time = time()
+		while True:
+			if not check_mob_still_alive(MobTypes.WATER, window_capture):
+				mosters_killed += 1
+				break
+			else:
+				if (time() - fight_time) >= fight_time_limit:
+					break
+				sleep(time_check_mob_still_alive)
+
+
+def mobs_not_available_on_screen():
+	print('No Mobs in Area')
+	keyboard.human_turn_back()
+	keyboard.press_key(VKEY['w'], press_time=3)
+
+
+def check_mob_existence(mob_life_bar, top_image, threshold=0.8, debug=False):
 	if debug:
 		cv.imshow("Mob Exists?", top_image)
 		cv.waitKey(0)
@@ -205,7 +176,7 @@ def check_mob_existence(mob_full_life, top_image, threshold=0.8, debug=False):
 	# There are 6 methods to choose from:
 	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
 	method = cv.TM_CCOEFF_NORMED
-	result = cv.matchTemplate(top_image, mob_full_life, method)
+	result = cv.matchTemplate(top_image, mob_life_bar, method)
 
 	# Get the best match position from the match result.
 	min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
@@ -216,37 +187,28 @@ def check_mob_existence(mob_full_life, top_image, threshold=0.8, debug=False):
 		return False
 
 
-#Check if the mob type icon and the red bar above char's head is visible
-def check_mob_still_alive(mob_type, user_target_bar, window_capture, threshold=0.8, debug=False):
+def check_mob_still_alive(mob_type, window_capture, threshold=0.8, debug=False):
 	# Take a new screenshot to verify the fight status
 	screenshot = window_capture.get_screenshot()
 	screenshot = cv.cvtColor(screenshot, cv.COLOR_BGR2GRAY)
-	
+
 	scrshot_w = screenshot.shape[1]
 	scrshot_h = screenshot.shape[0]
-	center_w = int(round(scrshot_w/2))
-	center_h = int(round(scrshot_h/2))
-
 
 	# Get the top of the screen to see if the mob life bar exists
 	top_image = screenshot[0:0+50, 200:scrshot_w-200]
-	center_image = screenshot[center_h-200:center_h, center_w-75:center_w+75]
 
 	if debug:
-		#cv.imshow("Mob Still Alive [Type Check]?", top_image)
-		#cv.waitKey(0)
-		cv.imshow("Mob Still Alive [Bar Check]?", center_image)
+		cv.imshow("Mob Still Alive [Type Check]?", top_image)
 		cv.waitKey(0)
 
 	# There are 6 methods to choose from:
 	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
 	method = cv.TM_CCOEFF_NORMED
 	result_type_check = cv.matchTemplate(top_image, mob_type, method)
-	#result_bar_check = cv.matchTemplate(center_image, user_target_bar, method)
 
 	# Get the best match position from the match result.
 	_, max_val_tc, _, _ = cv.minMaxLoc(result_type_check)
-	#_, max_val_bc, _, _ = cv.minMaxLoc(result_bar_check)
 
 	if max_val_tc >= threshold:
 		print('Mob still alive')
@@ -258,23 +220,6 @@ def check_mob_still_alive(mob_type, user_target_bar, window_capture, threshold=0
 
 def self_buff(hwnd):
 	pass
-
-
-# region Helpers
-def start_countdown(voice_engine, sleep_time_sec=5):
-	voice_engine.say(f'Iniciando em {sleep_time_sec} segundos')
-	voice_engine.runAndWait()
-	print('Starting', end='')
-	for i in range(10):
-		print('.', end='')
-		sleep(sleep_time_sec/10)
-	print('\nReady, forcing dwarves to work!')
-
-
-def print_logo(text_logo: str):
-	figlet = Figlet(font='slant')
-	print(figlet.renderText(text_logo))
-# endregion
 
 
 if __name__ == '__main__':
