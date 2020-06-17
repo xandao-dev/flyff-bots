@@ -31,14 +31,6 @@ class HumanKeyboard:
 			win32api.PostMessage(self.hwnd, win32con.WM_KEYUP, VKEY['s'], 0)
 			sleep(0.01)
 
-
-	#Turn back like a robot
-	def turn_back(self):
-		keys = (VKEY['a'], VKEY['d'])
-		random_time = round(uniform(0.6, 0.8), 3)
-		self.press_key(keys[randint(0, len(keys) - 1)], press_time=random_time)
-
-
 	def human_turn_back(self):
 		keys = (VKEY['a'], VKEY['d'])
 		random_time = round(uniform(0.6, 0.8), 3)
