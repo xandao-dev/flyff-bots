@@ -1,4 +1,5 @@
 from pathlib import Path
+from enum import Enum  
 
 import cv2 as cv
 
@@ -23,7 +24,8 @@ mob_type_electricity_path = str(Path(__file__).parent / 'mob_types' / 'electrici
 mob_life_bar_path = str(Path(__file__).parent / 'mob_life_bar.png')
 user_target_bar_path = str(Path(__file__).parent / 'user_target_bar.png')
 
-class MobNames():
+
+class MobName():
 	ROSPOSA = cv.imread(mob_rosposa_water_path, cv.IMREAD_GRAYSCALE)
 	KINGYO = cv.imread(mob_kingyo_water_path, cv.IMREAD_GRAYSCALE)
 	DLAKAV = cv.imread(mob_dlakav_water_path, cv.IMREAD_GRAYSCALE)
@@ -36,13 +38,28 @@ class MobNames():
 	NYAMULI = cv.imread(mob_nyamuli_fire_path, cv.IMREAD_GRAYSCALE)
 
 
-class MobTypes():
+class MobType():
 	WIND = cv.imread(mob_type_wind_path, cv.IMREAD_GRAYSCALE)
 	FIRE = cv.imread(mob_type_fire_path, cv.IMREAD_GRAYSCALE)
 	SOIL = cv.imread(mob_type_soil_path, cv.IMREAD_GRAYSCALE)
 	WATER = cv.imread(mob_type_water_path, cv.IMREAD_GRAYSCALE)
 	ELECTRICITY = cv.imread(mob_type_electricity_path, cv.IMREAD_GRAYSCALE)
 
+
+class MobInfo():
+	"""
+	MOB_NAME = (MOB NAME CV IMAGE, MOB TYPE CV IMAGE, HEIGHT_OFFSET)
+	"""
+	ROSPOSA = (MobName.ROSPOSA, MobType.WATER, 125)
+	KINGYO = (MobName.KINGYO, MobType.WATER, 50)
+	DLAKAV = (MobName.DLAKAV, MobType.WATER, 50)
+	BATTO = (MobName.BATTO, MobType.WIND, 50)
+	CASTOR = (MobName.CASTOR, MobType.SOIL, 50)
+	KRETAN = (MobName.KRETAN, MobType.SOIL, 50)
+	WORUN = (MobName.WORUN, MobType.SOIL, 50)
+	OSETI = (MobName.OSETI, MobType.ELECTRICITY, 50)
+	CARVI = (MobName.CARVI, MobType.FIRE, 50)
+	NYAMULI = (MobName.NYAMULI, MobType.FIRE, 50)
 
 class GeneralAssets():
 	MOB_LIFE_BAR = cv.imread(mob_life_bar_path, cv.IMREAD_GRAYSCALE)
