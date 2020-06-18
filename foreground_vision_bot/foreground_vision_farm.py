@@ -246,3 +246,10 @@ def self_buff():
 if __name__ == '__main__':
 	print_logo('Flyff Farm Bot')
 	main(debug)
+
+
+#TODO
+#Converter posições para utilizar a posição com offset da classe WindowCapture
+#Implementar overlay de texto no jogo
+#Melhorar condição de obstáculos
+#Melhorar busca de alvos
