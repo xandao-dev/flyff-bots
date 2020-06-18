@@ -50,16 +50,16 @@ class MobInfo():
 	"""
 	MOB_NAME = (MOB NAME CV IMAGE, MOB TYPE CV IMAGE, HEIGHT_OFFSET)
 	"""
-	ROSPOSA = (MobName.ROSPOSA, MobType.WATER, 125)
-	KINGYO = (MobName.KINGYO, MobType.WATER, 50)
-	DLAKAV = (MobName.DLAKAV, MobType.WATER, 50)
-	BATTO = (MobName.BATTO, MobType.WIND, 50)
-	CASTOR = (MobName.CASTOR, MobType.SOIL, 55)
-	KRETAN = (MobName.KRETAN, MobType.SOIL, 50)
-	WORUN = (MobName.WORUN, MobType.SOIL, 50)
-	OSETI = (MobName.OSETI, MobType.ELECTRICITY, 50)
-	CARVI = (MobName.CARVI, MobType.FIRE, 50)
-	NYAMULI = (MobName.NYAMULI, MobType.FIRE, 50)
+	ROSPOSA = (MobName.ROSPOSA, MobType.WATER, 80)
+	KINGYO = (MobName.KINGYO, MobType.WATER, 80)
+	DLAKAV = (MobName.DLAKAV, MobType.WATER, 80)
+	BATTO = (MobName.BATTO, MobType.WIND, 125)
+	CASTOR = (MobName.CASTOR, MobType.SOIL, 80)
+	KRETAN = (MobName.KRETAN, MobType.SOIL, 80)
+	WORUN = (MobName.WORUN, MobType.SOIL, 80)
+	OSETI = (MobName.OSETI, MobType.ELECTRICITY, 80)
+	CARVI = (MobName.CARVI, MobType.FIRE, 80)
+	NYAMULI = (MobName.NYAMULI, MobType.FIRE, 80)
 
 	def __init__(self):
 		pass

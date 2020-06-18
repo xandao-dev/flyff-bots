@@ -32,7 +32,7 @@ keyboard = HumanKeyboard(hwnd)
 all_mobs = MobInfo.get_all_mobs()
 
 
-def main(debug=False):
+def main(debug=True):
 	start_countdown(voice_engine, 3)	
 
 	current_mob_info_index = 0
@@ -41,25 +41,25 @@ def main(debug=False):
 	while True:
 		screenshot = window_capture.get_screenshot()
 		
-		if current_mob_info_index >= len(all_mobs): current_mob_info_index = 0
-		mob_name, mob_type, mob_height_offset = all_mobs[current_mob_info_index]
+		if current_mob_info_index >= (len(all_mobs) - 1): current_mob_info_index = 0
+		mob_name_cv, mob_type_cv, mob_height_offset = all_mobs[current_mob_info_index]
 
 		if not debug:
-			points = get_mobs_position(mob_name, screenshot, mob_height_offset)
+			points = get_mobs_position(mob_name_cv, screenshot, mob_height_offset)
 		else:
 			points = get_mobs_position(
-				mob_name, screenshot, mob_height_offset, debug_mode='points')
+				mob_name_cv, screenshot, mob_height_offset, debug_mode='points')
 			# print(points)
 
 			print('FPS {}'.format(round(1 / (time() - loop_time))))
 			loop_time = time()
-
+		
 		if points:
-			mobs_killed = mobs_available_on_screen(screenshot, mob_type, points, mobs_killed)
+			mobs_killed = mobs_available_on_screen(screenshot, mob_type_cv, points, mobs_killed)
 		else:
 			#TODO: Fazer ele virar a tela e checar de novo, primeiro.
 			current_mob_info_index += 1
-			if current_mob_info_index >= len(all_mobs):
+			if current_mob_info_index >= (len(all_mobs) - 1):
 				mobs_not_available_on_screen()
 			else:
 				print('Current mob no found, checking another one.')
@@ -70,25 +70,19 @@ def main(debug=False):
 		if cv.waitKey(1) == ord('q'):
 			cv.destroyAllWindows()
 			break
-		
-		print('FPS {}'.format(round(1 / (time() - loop_time))))
-		loop_time = time()
 
 
-def get_mobs_position(mob_name, screenshot, mob_height_offset, threshold=0.6, debug_mode=None):
+def get_mobs_position(mob_name_cv, screenshot, mob_height_offset, threshold=0.6, debug_mode=None):
 	# Save the dimensions of the needle image and the screenshot
-	needle_w = mob_name.shape[1]
-	needle_h = mob_name.shape[0]
+	needle_w = mob_name_cv.shape[1]
+	needle_h = mob_name_cv.shape[0]
 	scrshot_w = screenshot.shape[1]
 	scrshot_h = screenshot.shape[0]
-
-	# Cut the skills bar on the bottom and the claim rewards button on the left side.
-	screenshot_crop = screenshot[0:needle_h-55, 40:scrshot_w]
 
 	# There are 6 methods to choose from:
 	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
 	method = cv.TM_CCOEFF_NORMED
-	result = cv.matchTemplate(screenshot_crop, mob_name, method)
+	result = cv.matchTemplate(screenshot, mob_name_cv, method)
 
 	# Get the all the positions from the match result that exceed our threshold
 	locations = np.where(result >= threshold)
@@ -137,24 +131,29 @@ def get_mobs_position(mob_name, screenshot, mob_height_offset, threshold=0.6, de
 				top_left = (x, y)
 				bottom_right = (x + w, y + h)
 				# Draw the box
-				cv.rectangle(screenshot_crop, top_left, bottom_right, color=line_color,
+				cv.rectangle(screenshot, top_left, bottom_right, color=line_color,
 							 lineType=line_type, thickness=2)
-				img_resized = cv.resize(screenshot_crop, (975, 548))
+				img_resized = cv.resize(screenshot, (975, 548))
 				cv.imshow('Computer Vision', img_resized)
 			elif debug_mode == 'points':
 				# Draw the center point
-				cv.drawMarker(screenshot_crop, (center_x, center_y),
+				cv.drawMarker(screenshot, (center_x, center_y),
 							  color=marker_color, markerType=marker_type,
 							  markerSize=40, thickness=2)
-				# cv.putText(screenshot_crop, f'({center_x}, {center_y})', (x+w, y+h),
+				# cv.putText(screenshot, f'({center_x}, {center_y})', (x+w, y+h),
 				#		   cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-				img_resized = cv.resize(screenshot_crop, (975, 548))
+				img_resized = cv.resize(screenshot, (758, 426))
 				cv.imshow('Computer Vision', img_resized)
+	
+	# Remove points in the skills bar on the bottom and the claim rewards button on the left side.
+	for point in points:
+		if point[0] <= 40 or point[1] >= needle_h-55:
+			points.remove(point)
 
 	return points
 
 
-def mobs_available_on_screen(screenshot, mob_type, points, mobs_killed):
+def mobs_available_on_screen(screenshot, mob_type_cv, points, mobs_killed):
 	scrshot_w = screenshot.shape[1]
 	scrshot_h = screenshot.shape[0]
 	scrshot_center = (round(scrshot_w/2), round(scrshot_h/2))
@@ -164,15 +163,16 @@ def mobs_available_on_screen(screenshot, mob_type, points, mobs_killed):
 
 	mosters_count = mobs_killed
 	mob_pos = get_point_near_center(scrshot_center, points)
-	#mouse.move(to_point=mob_pos, duration=0.1)
-	mouse.move_like_robot(mob_pos)
+	mob_pos_converted = window_capture.get_screen_position(mob_pos)
+	mouse.move(to_point=mob_pos_converted, duration=0.1)
+	#mouse.move_like_robot(mob_pos_converted)
 	if check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
 		mouse.right_click(mob_pos)
 		keyboard.press_key(win32con.VK_F1, press_time=0.06)
 		fight_time = time()
 		fight_time_limit_count = 0
 		while True:
-			if not check_mob_still_alive(mob_type):
+			if not check_mob_still_alive(mob_type_cv):
 				mosters_count += 1
 				break
 			else:
@@ -209,7 +209,7 @@ def check_mob_existence(mob_life_bar, top_image, threshold=0.8, debug=False):
 		return False
 
 
-def check_mob_still_alive(mob_type, threshold=0.8, debug=False):
+def check_mob_still_alive(mob_type_cv, threshold=0.8, debug=False):
 	# Take a new screenshot to verify the fight status
 	screenshot = window_capture.get_screenshot()
 
@@ -226,7 +226,7 @@ def check_mob_still_alive(mob_type, threshold=0.8, debug=False):
 	# There are 6 methods to choose from:
 	# TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
 	method = cv.TM_CCOEFF_NORMED
-	result_type_check = cv.matchTemplate(top_image, mob_type, method)
+	result_type_check = cv.matchTemplate(top_image, mob_type_cv, method)
 
 	# Get the best match position from the match result.
 	_, max_val_tc, _, _ = cv.minMaxLoc(result_type_check)
