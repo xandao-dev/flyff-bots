@@ -25,6 +25,18 @@ def get_focused_window_handle(voice_engine):
 	return hwnd[0]
 
 
+def get_point_near_center(center, points):
+	dist_two_points = lambda center, point : ((center[0] - point[0])**2 + (center[1] - point[1])**2)**(1/2)
+	closest_dist = dist_two_points(center, points[0])
+	best_point = points[0]
+	for point in points:
+		dist = dist_two_points(center, point)
+		if dist < closest_dist:
+			closest_dist = dist
+			best_point = point
+	return best_point
+
+
 def start_countdown(voice_engine, sleep_time_sec=5):
 	voice_engine.say(f'Iniciando em {sleep_time_sec} segundos')
 	voice_engine.runAndWait()
