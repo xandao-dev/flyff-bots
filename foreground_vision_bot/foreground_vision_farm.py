@@ -12,7 +12,7 @@ import win32con
 import win32gui
 
 from assets.Assets import GeneralAssets, MobInfo
-from helpers import get_focused_window_handle, print_logo, start_countdown
+from helpers import get_focused_window_handle, print_logo, start_countdown, get_point_near_center
 from human_mouse.HumanMouse import HumanMouse
 from HumanKeyboard import VKEY, HumanKeyboard
 from WindowCapture import WindowCapture
@@ -20,29 +20,32 @@ from WindowCapture import WindowCapture
 #Confs & Paths
 debug = False
 time_check_mob_still_alive = 0.25
-mobs_kill_goal = 3
+mobs_kill_goal = 10
 fight_time_limit = 8
+
+# Instances
+voice_engine = pyttsx3.init()
+hwnd = get_focused_window_handle(voice_engine)
+window_capture = WindowCapture(hwnd)
+mouse = HumanMouse()
+keyboard = HumanKeyboard(hwnd)
+all_mobs = MobInfo.get_all_mobs()
 
 
 def main(debug=False):
-	voice_engine = pyttsx3.init()
-	hwnd = get_focused_window_handle(voice_engine)
-	window_capture = WindowCapture(hwnd)
-	mouse = HumanMouse()
-	keyboard = HumanKeyboard(hwnd)
+	start_countdown(voice_engine, 3)	
 
-	start_countdown(voice_engine, 3)
-
-	mob_name, mob_type, mob_height_offset = MobInfo.BATTO
-
+	current_mob_info_index = 0
 	mobs_killed = 0
 	loop_time = time()
 	while True:
 		screenshot = window_capture.get_screenshot()
+		
+		if current_mob_info_index >= len(all_mobs): current_mob_info_index = 0
+		mob_name, mob_type, mob_height_offset = all_mobs[current_mob_info_index]
 
 		if not debug:
-			points = get_mobs_position(
-				mob_name, screenshot, mob_height_offset)
+			points = get_mobs_position(mob_name, screenshot, mob_height_offset)
 		else:
 			points = get_mobs_position(
 				mob_name, screenshot, mob_height_offset, debug_mode='points')
@@ -52,11 +55,14 @@ def main(debug=False):
 			loop_time = time()
 
 		if points:
-			mobs_killed = mobs_available_on_screen(
-				mouse, keyboard, window_capture, screenshot, mob_type, points, mobs_killed
-			)
+			mobs_killed = mobs_available_on_screen(screenshot, mob_type, points, mobs_killed)
 		else:
-			mobs_not_available_on_screen(keyboard)
+			#TODO: Fazer ele virar a tela e checar de novo, primeiro.
+			current_mob_info_index += 1
+			if current_mob_info_index >= len(all_mobs):
+				mobs_not_available_on_screen()
+			else:
+				print('Current mob no found, checking another one.')
 
 		if mobs_killed >= mobs_kill_goal:
 			break
@@ -64,6 +70,9 @@ def main(debug=False):
 		if cv.waitKey(1) == ord('q'):
 			cv.destroyAllWindows()
 			break
+		
+		print('FPS {}'.format(round(1 / (time() - loop_time))))
+		loop_time = time()
 
 
 def get_mobs_position(mob_name, screenshot, mob_height_offset, threshold=0.6, debug_mode=None):
@@ -145,32 +154,40 @@ def get_mobs_position(mob_name, screenshot, mob_height_offset, threshold=0.6, de
 	return points
 
 
-def mobs_available_on_screen(mouse, keyboard, window_capture, screenshot, mob_type, points, mobs_killed):
+def mobs_available_on_screen(screenshot, mob_type, points, mobs_killed):
+	scrshot_w = screenshot.shape[1]
+	scrshot_h = screenshot.shape[0]
+	scrshot_center = (round(scrshot_w/2), round(scrshot_h/2))
+
 	# Get the top of the screen
-	top_image = screenshot[0:0+50, 200:screenshot.shape[1]-200]
+	top_image = screenshot[0:0+50, 200:scrshot_w-200]
 
 	mosters_count = mobs_killed
-	mob_pos = points[round(len(points)/2)]
-	mouse.move(to_point=mob_pos, duration=0.1)
+	mob_pos = get_point_near_center(scrshot_center, points)
+	#mouse.move(to_point=mob_pos, duration=0.1)
+	mouse.move_like_robot(mob_pos)
 	if check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
 		mouse.right_click(mob_pos)
 		keyboard.press_key(win32con.VK_F1, press_time=0.06)
 		fight_time = time()
+		fight_time_limit_count = 0
 		while True:
-			if not check_mob_still_alive(mob_type, window_capture):
+			if not check_mob_still_alive(mob_type):
 				mosters_count += 1
 				break
 			else:
 				if (time() - fight_time) >= fight_time_limit:
+					# Unselect the mob if the fight limite is over
+					keyboard.press_key(win32con.VK_ESCAPE, press_time=0.06)
 					break
 				sleep(time_check_mob_still_alive)
 	return mosters_count
 
 
-def mobs_not_available_on_screen(keyboard):
-	print('No Mobs in Area')
+def mobs_not_available_on_screen():
+	print('No Mobs in Area, moving.')
 	keyboard.human_turn_back()
-	keyboard.press_key(VKEY['w'], press_time=3)
+	keyboard.press_key(VKEY['w'], press_time=4)
 
 
 def check_mob_existence(mob_life_bar, top_image, threshold=0.8, debug=False):
@@ -192,7 +209,7 @@ def check_mob_existence(mob_life_bar, top_image, threshold=0.8, debug=False):
 		return False
 
 
-def check_mob_still_alive(mob_type, window_capture, threshold=0.8, debug=False):
+def check_mob_still_alive(mob_type, threshold=0.8, debug=False):
 	# Take a new screenshot to verify the fight status
 	screenshot = window_capture.get_screenshot()
 
@@ -222,7 +239,7 @@ def check_mob_still_alive(mob_type, window_capture, threshold=0.8, debug=False):
 		return False
 
 
-def self_buff(hwnd):
+def self_buff():
 	pass
 
 
