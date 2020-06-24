@@ -16,32 +16,54 @@ import numpy as np
 import cv2 as cv
 #endregion
 
-"""
-STATS
-
-Max. HP +(50 - 500)
-Max. MP +(50 - 450)
-Max. FP +(50 - 500)
-STR +(5 - 35)
-STA +(5 - 35)
-DEX +(5 - 35)
-INT +(5 - 35) 
-Attack +(5 - 140)
-DEF +(4 - 112)
-Speed +(1 - 10)%
-Attack Speed +(2 - 38)%
-Critical Chance +(1 - 10)%
-Additional Damage of Critical Hits +(1 - 19)%
-Decreased Casting Time +(1 - 10)%
-"""
-
 awakening_interval = 1
 
+
 def main():
-	attribute = input('What is the attribute? ')
-	attribute2 = input('What is the attribute 2? ("." for empty) ')
-	if attribute2 == '.': attribute2 = attribute
-	min_value = int(input('What is the minimum value? '))
+	print("""Attribute List:
+\tHP +(50 - 500) x5
+\tMP +(50 - 450) x5
+\tFP +(50 - 500) x5
+\tSTR +(5 - 35) x5
+\tSTA +(5 - 35) x5
+\tDEX +(5 - 35) x5
+\tINT +(5 - 35) x5
+\tAttack +(5 - 140) x5
+\tDEF +(4 - 112) x5
+\tSpeed +(1 - 10)% x5
+\tAttack Speed +(2 - 38)% x5
+\tCritical Chance +(1 - 10)% x5
+\tIncreased Critical Damage +(1 - 19)% x5
+\tDecreased Casting Time +(1 - 10)% x5
+""")
+
+	print("""Awakening Weapons and Shields:
+\tAll available attributes
+
+Awakening Armour:
+\tHelmet:
+\t\tSTR, DEX, INT, STA, HP, MP, FP
+\tSuit:
+\t\tAll available attributes
+\tGauntlet:
+\t\tCritical Chance, Attack, Decreased Casting Time, Attack Speed, MP, FP
+\tBoots:
+\t\tIncreased Critical Damage, Speed, DEF, HP, MP, FP
+""")
+
+	attribute1 = input('What is the attribute? ')
+	min_value_attr1 = int(input(f'What is the minimum value of {attribute1}? '))
+
+	attribute2 = input('What is the attribute 2? (Optional) ')
+	if not attribute2:
+		attribute2 = attribute1
+		min_value_attr2 = min_value_attr1
+		attr_same_time = 'n'
+	else:
+		min_value_attr2 = int(input(f'What is the minimum value of {attribute2}?'))
+		attr_same_time = input('Both Attribute at the same time? (y/n) ')
+
+	maximum_attempts = int(input('Maximum awake attempts? '))
 
 	hwnd = get_focused_window_handle()
 	start_awake_button_pos = get_window_point(hwnd)
@@ -56,14 +78,38 @@ def main():
 		awake_area_converted = image_convertion(awake_area)
 		awake_text_list = get_text_from_image(awake_area_converted)
 
+		if awake_count >= maximum_attempts:
+			print(f'Maximum attempts reached! {maximum_attempts} attempts.')
+			exit()
+
 		# Search for the awake
-		for awake in awake_text_list:
-			if attribute in awake or attribute2 in awake:
-				attr_value = int(re.findall('\d+', awake)[0])
-				if min_value <= attr_value:
-					print(f'\nFound: {awake}')
-					print(f'Awake Count: {awake_count}\n')
-					exit()
+		attr_same_time_found = 0
+		for attr in awake_text_list:
+			if attr_same_time.lower() == 'y' or attr_same_time.lower() == 'yes':
+				if attribute1 in attr and attr_same_time_found == 0:
+					attr_value = int(re.findall('\d+', attr)[0])
+					if min_value_attr1 <= attr_value:
+						attr_same_time_found = 1
+				if attribute2 in attr and attr_same_time_found == 1:
+					attr_value = int(re.findall('\d+', attr)[0])
+					if min_value_attr2 <= attr_value:
+						print(f'Wanted:\n\t{attribute1}: +{min_value_attr1}\n\t{attribute2}: +{min_value_attr2}')
+						print(f'\nFound: {awake_text_list}')
+						print(f'Awake Attempts: {awake_count}\n')
+						exit()
+			else:
+				if attribute1 in attr:
+					attr_value = int(re.findall('\d+', attr)[0])
+					if min_value_attr1 <= attr_value:
+						print(f'\nFound: {awake_text_list}')
+						print(f'Awake Attempts: {awake_count}\n')
+						exit()
+				if attribute2 in attr:
+					attr_value = int(re.findall('\d+', attr)[0])
+					if min_value_attr2 <= attr_value:
+						print(f'\nFound: {awake_text_list}')
+						print(f'Awake Attempts: {awake_count}\n')
+						exit()
 
 		#click in awake button
 		magic_click(hwnd, *start_awake_button_pos)
@@ -196,22 +242,22 @@ def magic_click(hwnd, x, y):
 
 # region Helpers
 def start_countdown(sleep_time_sec=5):
-    print('Starting', end='')
-    for i in range(10):
-        print('.', end='')
-        time.sleep(sleep_time_sec/10)
-    print('\nReady, forcing dwarves to work!')
+	print('Starting', end='')
+	for i in range(10):
+		print('.', end='')
+		time.sleep(sleep_time_sec/10)
+	print('\nReady, forcing dwarves to work!')
 
 
 def print_logo(text_logo: str):
-    figlet = Figlet(font='slant')
-    print(figlet.renderText(text_logo))
+	figlet = Figlet(font='slant')
+	print(figlet.renderText(text_logo))
 # endregion
 
 
 if __name__ == '__main__':
-    try:
-        print_logo('Flyff Awakening Bot')
-        main()
-    except Exception as e:
-        print(str(e))
+	try:
+		print_logo('Flyff Awakening Bot')
+		main()
+	except Exception as e:
+		print(str(e))
