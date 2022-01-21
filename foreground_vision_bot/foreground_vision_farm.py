@@ -18,9 +18,9 @@ from HumanKeyboard import VKEY, HumanKeyboard
 from WindowCapture import WindowCapture
 
 #Confs & Paths
-debug = False
+debug = True
 time_check_mob_still_alive = 0.25
-mobs_kill_goal = 10
+mobs_kill_goal = 99999
 fight_time_limit = 8
 
 # Instances
@@ -249,6 +249,7 @@ if __name__ == '__main__':
 
 
 #TODO
+#Get_center_point pegar 3 pontos mais proximos
 #Converter posições para utilizar a posição com offset da classe WindowCapture
 #Implementar overlay de texto no jogo
 #Melhorar condição de obstáculos

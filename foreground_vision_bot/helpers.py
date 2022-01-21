@@ -26,6 +26,7 @@ def get_focused_window_handle(voice_engine):
 	return hwnd[0]
 
 
+i=0
 def get_point_near_center(center, points):
 	dist_two_points = lambda center, point : ((center[0] - point[0])**2 + (center[1] - point[1])**2)**(1/2)
 	closest_dist = 999999 #Start with a big number for smaller search
@@ -37,7 +38,10 @@ def get_point_near_center(center, points):
 			best_point.append(point)
 	# Return the second most nearest point or the nearest point if just have one point.
 	# Because the nearest mob sometimes is already dead and we don't want to select it.
-	return best_point[-1]
+	global i
+	if i == 0: i = -1
+	elif i == -1: i = 0
+	return best_point[i]
 
 
 def start_countdown(voice_engine, sleep_time_sec=5):

@@ -257,7 +257,7 @@ def print_logo(text_logo: str):
 
 if __name__ == '__main__':
 	try:
-		print_logo('Flyff Awakening Bot')
+		print_logo('Flyff Awake Bot')
 		main()
 	except Exception as e:
 		print(str(e))
