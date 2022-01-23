@@ -18,7 +18,6 @@
 </p>
 
 
-
 <!-- TABLE OF CONTENTS -->
 <details open="open">
   <summary>Table of Contents</summary>
@@ -63,29 +62,29 @@ https://user-images.githubusercontent.com/22106326/150702322-967cf2d8-d789-45e6-
 
 ### Features
 
-*Foreground Vision Bot*
+**Foreground Vision Bot**
 
-* :star: Works very well :star:
+* :star: Works very good :star:
 * Track the monsters by it's names using computer vision (OpenCV)
 * Automatically attack the monsters and move to the next one
 * If no monsters are found, it will automatically run to find more monsters
 * Human-like mouse movement
 
-*Awakening Bot*
+**Awakening Bot**
 
-* :star: Works very well :star:
+* :star: Works very good :star:
 * Automatically awaken your items until you get the required stats
 * Works on background or foreground
 * Works using OCR
 
-*Foreground Farm*
+**Foreground Farm**
 
 * :warning: Does not work very well :warning:
 * Farm bot that works on foreground
 * Works moving the mouse on the screen to see if it finds a monster
 * Works matching pixel colors
 
-*Recording Bot*
+**Recording Bot**
 
 * :warning: Does not work very well :warning:
 * It records your actions like moving, attacking, drinking potions and etc.
@@ -96,7 +95,10 @@ https://user-images.githubusercontent.com/22106326/150702322-967cf2d8-d789-45e6-
 ### Built With
 
 * [Python3](https://www.python.org/) - A general-purpose, high-level programming language
-* [fire](https://github.com/google/python-fire) - A google library for creating CLI applications
+* [OpenCV](https://opencv.org/) - Open source computer vision library
+* [pytesseract](https://pypi.org/project/pytesseract/) - Google's Tesseract OCR library
+* [pyttsx3](https://pypi.org/project/pyttsx3/) - Speech synthesis library
+* [numpy](https://www.numpy.org/) - Scientific computing package
 
 
 <!-- GETTING STARTED -->
@@ -111,36 +113,35 @@ To get a local copy up and running follow these simple steps.
   git clone https://github.com/xandao6/clockworks-flyff-bots.git
   ```
 
-2. Install the tool
+2. Install dependencies
   ```sh
   cd clockworks-flyff-bots
-  python3 setup.py install
-  ```
-
-3. (Windows Only) Install Dependencies
-  ```sh
-  python3 -m pip install pywin32
+  python3 -m pip install -r requirements.txt
   ```
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-* Run the tool on the current directory and do a backup
-	```sh
-  clockworks-flyff-bots
-  ```
-* Run the tool on the current directory without backup
-	```sh
-  clockworks-flyff-bots --no-backup
-  ```
-* Run the tool specifying the path and do a backup
-	```sh
-  clockworks-flyff-bots --path=path/to/directory
-  ```
-* Run the tool specifying the path without backup
-	```sh
-  clockworks-flyff-bots --path=path/to/directory --no-backup
-  ```
+* Run foreground vision bot
+
+  1. Open the game and configure it like in the [image](./foreground_vision_bot/settings.png) inside the bot folder;
+  2. Run the bot: `python3 foreground_vision_farm.py`
+
+* Run awakening bot
+
+  1. Open the game
+  2. Run the bot: `python3 background_awake.py`
+
+* Run foreground farm
+
+  1. Open the game
+  2. Run the bot: `python3 foreground_farm.py`
+
+* Run recording bot
+
+  1. Open the game
+  2. Run the recorder: `python3 recorder.py` or `python3 recorder_no_mouse.py`
+  3. Run the playback: `python3 foreground_playback.py` or `python3 background_playback.py`
 
 <!-- ROADMAP -->
 ## Roadmap

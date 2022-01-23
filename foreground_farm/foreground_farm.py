@@ -6,7 +6,6 @@ click in the mob to attack it. Doesn't work very well.
 
 # region Imports
 import time
-from pathlib import Path
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 import keyboard
