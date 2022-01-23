@@ -1,0 +1,11 @@
+pywin32
+pyfiglet
+pynput
+opencv-python
+pyttsx3
+numpy
+pytweening
+pytesseract
+image
+keyboard
+pyautogui
