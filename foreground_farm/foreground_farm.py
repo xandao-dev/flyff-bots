@@ -1,7 +1,7 @@
 """Foreground Farm
 
 Farm aproach: Move the mouse in the screen and watch if the enemy life's bar appears, then
-click in the mob and atack it. Doesn't work very well.
+click in the mob to attack it. Doesn't work very well.
 """
 
 # region Imports
@@ -10,8 +10,6 @@ from pathlib import Path
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 import keyboard
-from pytesseract import image_to_string
-from PIL import Image
 import pyautogui
 import win32api
 import win32con

@@ -1,7 +1,6 @@
 #region Imports
 import time
 import re
-from pathlib import Path
 from pyfiglet import Figlet
 from pynput.mouse import Listener as MouseListener
 from pytesseract import image_to_string
@@ -12,8 +11,6 @@ import win32api
 import win32gui
 import win32con
 import win32ui
-import numpy as np
-import cv2 as cv
 #endregion
 
 awakening_interval = 1
