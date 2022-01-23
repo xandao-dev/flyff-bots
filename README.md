@@ -53,9 +53,12 @@
 <b>Foreground Vision Bot</b>
 
 
+https://user-images.githubusercontent.com/22106326/150702302-fb479e56-2cbb-4030-b77a-65a43c81c4c0.mp4
+
 <b>Awakening Bot</b>
 
 
+https://user-images.githubusercontent.com/22106326/150702322-967cf2d8-d789-45e6-af61-503c96dc2ea9.mp4
 </div>
 
 ### Features
