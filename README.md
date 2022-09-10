@@ -1,19 +1,19 @@
 <br />
 <p align="center">
-  <h3 align="center">Clockworks Flyff Bots</h3>
+  <h3 align="center">Flyff Bots</h3>
 
   <p align="center">
 	Flyff is a MMORPG game that I used to play when I was a kid. I always wanted to create a bot for it and here I am.
-	This project is a set of bots that I created for Clockworks Flyff. It has bot for farming and for upgrading your items.
+	This project is a set of bots that I created for Flyff. It has bot for farming and for upgrading your items.
 	<br />
 	:warning: Windows only :warning:
     <br />
 	<br />
-    <a href="https://github.com/xandao-dev/clockworks-flyff-bots"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/xandao-dev/flyff-bots"><strong>Explore the docs »</strong></a>
     <br />
-    <a href="https://github.com/xandao-dev/clockworks-flyff-bots/issue">Report Bug</a>
+    <a href="https://github.com/xandao-dev/flyff-bots/issue">Report Bug</a>
     ·
-    <a href="https://github.com/xandao-dev/clockworks-flyff-bots/issues">Request Feature</a>
+    <a href="https://github.com/xandao-dev/flyff-bots/issues">Request Feature</a>
   </p>
 </p>
 
@@ -113,12 +113,12 @@ To get a local copy up and running follow these simple steps.
 
 1. Clone the repo
   ```sh
-  git clone https://github.com/xandao-dev/clockworks-flyff-bots.git
+  git clone https://github.com/xandao-dev/flyff-bots.git
   ```
 
 2. Install dependencies
   ```sh
-  cd clockworks-flyff-bots
+  cd flyff-bots
   python3 -m pip install -r requirements.txt
   ```
 
@@ -149,7 +149,7 @@ To get a local copy up and running follow these simple steps.
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/xandao-dev/clockworks-flyff-bots/issues) for a list of proposed features (and known issues).
+See the [open issues](https://github.com/xandao-dev/flyff-bots/issues) for a list of proposed features (and known issues).
 
 
 <!-- CONTRIBUTING -->
@@ -176,4 +176,4 @@ Free software =)
 
 Alexandre Calil - [Linkedin](https://www.linkedin.com/in/xandao-dev/) - [alexandre@xandao.dev](mailto:alexandre@xandao.dev)
 
-Project Link: [https://github.com/xandao-dev/clockworks-flyff-bots](https://github.com/xandao-dev/clockworks-flyff-bots)
+Project Link: [https://github.com/xandao-dev/flyff-bots](https://github.com/xandao-dev/flyff-bots)
