@@ -11,7 +11,7 @@ def main():
     ]
 
     # Create the window and show it without the plot
-    window = sg.Window("Flyff FVB", layout, location=(800, 400), resizable=True)
+    window = sg.Window("Flyff FVF", layout, location=(800, 400), resizable=True)
 
     cap = cv2.VideoCapture(0)
 
