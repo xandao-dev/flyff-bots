@@ -18,7 +18,6 @@
 </p>
 
 
-<!-- TABLE OF CONTENTS -->
 <details open="open">
   <summary>Table of Contents</summary>
   <ol>
@@ -44,8 +43,6 @@
 </details>
 
 
-
-<!-- ABOUT THE PROJECT -->
 ## About The Project
 
 <div align="center">
@@ -122,12 +119,17 @@ To get a local copy up and running follow these simple steps.
   python3 -m pip install -r requirements.txt
   ```
 
+### Common Issues
+
+1. `import win32gui ImportError: DLL load failed: The specified module could not be found.`
+    * Install [pywin32](https://github.com/mhammond/pywin32/releases) from binaries for your python version
+
 <!-- USAGE EXAMPLES -->
 ## Usage
 
 * Run foreground vision bot
 
-  1. Open the game and configure it like in the [image](./foreground_vision_bot/settings.png) inside the bot folder;
+  1. Open the game and configure it like in the [image](./foreground_vision_bot/docs/settings.png) inside the bot folder;
   2. Run the bot: `python3 foreground_vision_farm.py`
 
 * Run awakening bot

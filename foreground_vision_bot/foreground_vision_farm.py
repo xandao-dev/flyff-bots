@@ -12,10 +12,10 @@ import win32con
 import win32gui
 
 from assets.Assets import GeneralAssets, MobInfo
-from helpers import get_focused_window_handle, print_logo, start_countdown, get_point_near_center
-from human_mouse.HumanMouse import HumanMouse
-from HumanKeyboard import VKEY, HumanKeyboard
-from WindowCapture import WindowCapture
+from utils.helpers import get_focused_window_handle, print_logo, start_countdown, get_point_near_center
+from libs.human_mouse.HumanMouse import HumanMouse
+from libs.HumanKeyboard import VKEY, HumanKeyboard
+from libs.WindowCapture import WindowCapture
 
 #Confs & Paths
 debug = True
