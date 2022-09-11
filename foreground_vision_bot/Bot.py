@@ -28,7 +28,12 @@ class Bot:
         self.debug_image_mobs_pos_boxes = None
         self.debug_image_mobs_pos_points = None
 
-        # Initialize
+        # Options
+        self.get_mobs_position_threshold = 0.6
+        self.check_mob_still_alive_threshold = 0.6
+        self.check_mob_existence_threshold = 0.5
+
+        # Instances
         self.voice_engine = pyttsx3.init()
         self.hwnd = get_focused_window_handle(self.voice_engine)
         self.window_capture = WindowCapture(self.hwnd)
@@ -38,7 +43,7 @@ class Bot:
 
         start_countdown(self.voice_engine, 3)
 
-    def __get_mobs_position(self, mob_name_cv, screenshot, mob_height_offset, threshold=0.6):
+    def __get_mobs_position(self, mob_name_cv, screenshot, mob_height_offset):
         # Save the dimensions of the needle image and the screenshot
         needle_w = mob_name_cv.shape[1]
         needle_h = mob_name_cv.shape[0]
@@ -51,7 +56,7 @@ class Bot:
         result = cv.matchTemplate(screenshot, mob_name_cv, method)
 
         # Get the all the positions from the match result that exceed our threshold
-        locations = np.where(result >= threshold)
+        locations = np.where(result >= self.get_mobs_position_threshold)
         locations = list(zip(*locations[::-1]))
         # print(locations)
 
@@ -116,7 +121,7 @@ class Bot:
 
         return points
 
-    def __check_mob_still_alive(self, mob_type_cv, threshold=0.8, debug=False):
+    def __check_mob_still_alive(self, mob_type_cv, debug=False):
         # Take a new screenshot to verify the fight status
         screenshot = self.window_capture.get_screenshot()
 
@@ -138,14 +143,14 @@ class Bot:
         # Get the best match position from the match result.
         _, max_val_tc, _, _ = cv.minMaxLoc(result_type_check)
 
-        if max_val_tc >= threshold:
+        if max_val_tc >= self.check_mob_still_alive_threshold:
             print("Mob still alive")
             return True
         else:
             print("No mob selected")
             return False
 
-    def __check_mob_existence(self, mob_life_bar, top_image, threshold=0.8, debug=False):
+    def __check_mob_existence(self, mob_life_bar, top_image, debug=False):
         if debug:
             cv.imshow("Mob Exists?", top_image)
             cv.waitKey(0)
@@ -157,11 +162,11 @@ class Bot:
 
         # Get the best match position from the match result.
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
-        if max_val >= threshold:
-            print("Mob found!")
+        if max_val >= self.check_mob_existence_threshold:
+            print(f"Mob found! Best check_mob_existence_threshold matched value: {max_val}")
             return True
-        else:
-            return False
+        print(f"No mob found! Best check_mob_existence_threshold matched value: {max_val}")
+        return False
 
     def __mobs_available_on_screen(self, screenshot, mob_type_cv, points, mobs_killed):
         scrshot_w = screenshot.shape[1]
@@ -175,7 +180,7 @@ class Bot:
         mob_pos = get_point_near_center(scrshot_center, points)
         mob_pos_converted = self.window_capture.get_screen_position(mob_pos)
         self.mouse.move(to_point=mob_pos_converted, duration=0.1)
-        # self.mouse.move_like_robot(mob_pos_converted)
+        #self.mouse.move_like_robot(mob_pos_converted)
         if self.__check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
             self.mouse.right_click(mob_pos)
             self.keyboard.press_key(win32con.VK_F1, press_time=0.06)
@@ -204,7 +209,6 @@ class Bot:
         loop_time = time()
 
         while True:
-            # state = gui.update(imgbytes=debug_image)
             screenshot = self.window_capture.get_screenshot()
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
@@ -212,15 +216,15 @@ class Bot:
             mob_name_cv, mob_type_cv, mob_height_offset = self.all_mobs[current_mob_info_index]
 
             points = self.__get_mobs_position(mob_name_cv, screenshot, mob_height_offset)
-            # print(points)
+            #print("Mobs positions: ", points)
 
-            print("FPS {}".format(round(1 / (time() - loop_time))))
+            #print("FPS {}".format(round(1 / (time() - loop_time))))
             loop_time = time()
 
             if points:
                 mobs_killed = self.__mobs_available_on_screen(screenshot, mob_type_cv, points, mobs_killed)
             else:
-                # TODO: Turn around and check for mobs first before moving forward.
+                # TODO: Turn around and check for mobs first before changing the current mob
                 current_mob_info_index += 1
                 if current_mob_info_index >= (len(self.all_mobs) - 1):
                     self.__mobs_not_available_on_screen()
