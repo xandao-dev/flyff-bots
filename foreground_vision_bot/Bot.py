@@ -1,4 +1,5 @@
 from time import sleep, time
+from threading import Thread
 
 import cv2 as cv
 import numpy as np
@@ -6,7 +7,7 @@ import pyttsx3
 import win32con
 
 from assets.Assets import GeneralAssets, MobInfo
-from utils.helpers import get_focused_window_handle, start_countdown, get_point_near_center
+from utils.helpers import start_countdown, get_point_near_center
 from libs.human_mouse.HumanMouse import HumanMouse
 from libs.HumanKeyboard import VKEY, HumanKeyboard
 from libs.WindowCapture import WindowCapture
@@ -29,15 +30,19 @@ class Bot:
         # Debug Variables
         self.image_mobs_position = None
 
-        # Instances
+    def setup(self, window_handler):
         self.voice_engine = pyttsx3.init()
-        self.hwnd = get_focused_window_handle(self.voice_engine)
-        self.window_capture = WindowCapture(self.hwnd)
+        self.window_capture = WindowCapture(window_handler)
         self.mouse = HumanMouse()
-        self.keyboard = HumanKeyboard(self.hwnd)
+        self.keyboard = HumanKeyboard(window_handler)
         self.all_mobs = MobInfo.get_all_mobs()
 
-        start_countdown(self.voice_engine, 1)
+    def start(self, gui_window):
+        self.__farm_thread_running = True
+        Thread(target=self.__farm_thread, args=(gui_window,), daemon=True).start()
+
+    def stop(self):
+        self.__farm_thread_running = False
 
     def set_config(self, **options):
         """Set the config options for the bot.
@@ -65,7 +70,8 @@ class Bot:
         for key, value in options.items():
             self.config[key] = value
 
-    def farm_thread(self, gui_window):
+    def __farm_thread(self, gui_window):
+        start_countdown(self.voice_engine, 3)
         current_mob_info_index = 0
         mobs_killed = 0
         loop_time = time()
@@ -100,8 +106,7 @@ class Bot:
             gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
             loop_time = time()
 
-            if cv.waitKey(1) == ord("q"):
-                cv.destroyAllWindows()
+            if not self.__farm_thread_running:
                 break
 
     def __get_mobs_position(self, mob_name_cv, screenshot, mob_height_offset):

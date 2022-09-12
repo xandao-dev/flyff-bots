@@ -8,7 +8,7 @@ from pynput.mouse import Listener as MouseListener
 
 def get_focused_window_handle(voice_engine):
     print("\nClick in the flyff window to get the process! The first click will be considered.")
-    voice_engine.say("Selecione a tela do jogo")
+    voice_engine.say("Select the game window")
 
     hwnd = []
 
@@ -26,9 +26,17 @@ def get_focused_window_handle(voice_engine):
     return hwnd[0]
 
 
+def get_window_handlers():
+    hwnd_from_title = {}
+    def winEnumHandler(hwnd, ctx):
+        if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd) != "":
+            hwnd_from_title[win32gui.GetWindowText(hwnd)] = hwnd
+            print(hex(hwnd), win32gui.GetWindowText(hwnd))
+
+    win32gui.EnumWindows(winEnumHandler, None)
+    return hwnd_from_title
+
 i = 0
-
-
 def get_point_near_center(center, points):
     dist_two_points = lambda center, point: ((center[0] - point[0]) ** 2 + (center[1] - point[1]) ** 2) ** (1 / 2)
     closest_dist = 999999  # Start with a big number for smaller search
@@ -49,7 +57,7 @@ def get_point_near_center(center, points):
 
 
 def start_countdown(voice_engine, sleep_time_sec=5):
-    voice_engine.say(f"Iniciando em {sleep_time_sec} segundos")
+    voice_engine.say(f"Starting in {sleep_time_sec} seconds")
     voice_engine.runAndWait()
     print("Starting", end="")
     for i in range(10):
