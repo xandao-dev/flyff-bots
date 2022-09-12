@@ -3,6 +3,7 @@ import cv2 as cv
 
 from utils.helpers import get_window_handlers
 
+
 class Gui:
     def __init__(self, theme="DarkAmber"):
         self.logger_events = ["msg", "msg_red", "msg_purple", "msg_blue"]
@@ -11,6 +12,28 @@ class Gui:
             "msg_red": ("white", "red"),
             "msg_purple": ("white", "purple"),
             "msg_blue": ("white", "blue"),
+        }
+        self.frame_resolutions = {
+            "160x120": (160, 120),
+            "200x150": (200, 150),
+            "320x240": (320, 240),
+            "400x300": (400, 300),
+            "640x480": (640, 480),
+            "800x600": (800, 600),
+            "1024x600": (1024, 600),
+            "1024x768": (1024, 768),
+            "1280x700": (1280, 700),
+            "1280x720": (1280, 720),
+            "1280x800": (1280, 800),
+            "1280x1024": (1280, 1024),
+            "1366x768": (1366, 768),
+            "1400x1050": (1400, 1050),
+            "1440x900": (1440, 900),
+            "1600x900": (1600, 900),
+            "1600x1200": (1600, 1200),
+            "1680x1050": (1680, 1050),
+            "1920x1000": (1920, 1000),
+            "1920x1080": (1920, 1080),
         }
         sg.theme(theme)
 
@@ -70,7 +93,7 @@ class Gui:
                     sg.cprint("Invalid delay to check if mob is still alive")
                     self.window["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"].update("0.25")
                     bot.set_config(delay_to_check_mob_still_alive_sec=0.25)
-            
+
             if event in self.logger_events:
                 sg.cprint(values[event], c=self.logger_events_color[event])
 
@@ -93,9 +116,11 @@ class Gui:
             if values["-SHOW_FRAMES-"]:
                 img = values.get("image_mobs_position", None)
                 if img is not None:
+                    resolution = values["-DEBUG_IMG_WIDTH-"]
+                    w, h = self.frame_resolutions[resolution]
+                    img = cv.resize(img, (w, h))
                     imgbytes = cv.imencode(".png", img)[1].tobytes()
                     self.window["-DEBUG_IMAGE-"].update(data=imgbytes)
-
 
     def close(self):
         self.window.close()
@@ -105,6 +130,26 @@ class Gui:
 
         main = sg.Column(
             [
+                [
+                    sg.Frame(
+                        "Actions:",
+                        [
+                            [
+                                sg.Column(
+                                    [
+                                        [
+                                            sg.Button("Attach Window", key="-ATTACH_WINDOW-"),
+                                            sg.Button("Start", disabled=True, key="-START_BOT-"),
+                                            sg.Button("Stop", disabled=True, key="-STOP_BOT-"),
+                                            sg.Button("Exit"),
+                                        ]
+                                    ],
+                                    pad=(0, 0),
+                                )
+                            ]
+                        ],
+                    )
+                ],
                 [
                     sg.Frame(
                         "Options:",
@@ -178,6 +223,9 @@ class Gui:
                 ],
             ],
             pad=(0, 0),
+            scrollable=True,
+            vertical_scroll_only=True,
+            expand_y=True,
         )
 
         video = sg.Column(
@@ -185,32 +233,16 @@ class Gui:
                 [
                     sg.Frame(
                         "Bot's Vision:",
-                        [[sg.Image(filename="", key="-DEBUG_IMAGE-")]],
-                    )
-                ]
-            ],
-            pad=(0, 0),
-        )
-
-        footer = sg.Column(
-            [
-                [
-                    sg.Frame(
-                        "Actions:",
                         [
                             [
-                                sg.Column(
-                                    [
-                                        [
-                                            sg.Button("Attach Window", key="-ATTACH_WINDOW-"),
-                                            sg.Button("Start", disabled=True, key="-START_BOT-"),
-                                            sg.Button("Stop", disabled=True, key="-STOP_BOT-"),
-                                            sg.Button("Exit"),
-                                        ]
-                                    ],
-                                    pad=(0, 0),
-                                )
-                            ]
+                                sg.Text("Image Resolution:"),
+                                sg.Combo(
+                                    list(self.frame_resolutions.keys()),
+                                    default_value="400x300",
+                                    key="-DEBUG_IMG_WIDTH-",
+                                ),
+                            ],
+                            [sg.Image(filename="", key="-DEBUG_IMAGE-")],
                         ],
                     )
                 ]
@@ -218,7 +250,7 @@ class Gui:
             pad=(0, 0),
         )
 
-        return [title, [main, video], [footer]]
+        return [title, [main, video]]
 
     def __attach_window_popup(self):
         handlers = get_window_handlers()
