@@ -1,8 +1,8 @@
 import pytweening
 import numpy as np
 import random
-from human_mouse._utils import isListOfPoints, isNumeric
-from human_mouse._beziercurve import BezierCurve
+from libs.human_mouse._utils import isListOfPoints, isNumeric
+from libs.human_mouse._beziercurve import BezierCurve
 
 class HumanCurve():
 	"""

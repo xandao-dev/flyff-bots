@@ -9,3 +9,4 @@ pytesseract
 image
 keyboard
 pyautogui
+pysimplegui

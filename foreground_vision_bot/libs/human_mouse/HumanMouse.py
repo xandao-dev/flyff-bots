@@ -3,7 +3,7 @@ from random import uniform, randint
 
 import win32api, win32con
 
-from human_mouse.HumanCurve import HumanCurve
+from libs.human_mouse.HumanCurve import HumanCurve
 
 
 class HumanMouse:
