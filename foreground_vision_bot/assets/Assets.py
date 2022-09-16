@@ -23,7 +23,8 @@ mob_type_electricity_path = str(Path(__file__).parent / 'mob_types' / 'electrici
 
 mob_life_bar_path = str(Path(__file__).parent / 'mob_life_bar.png')
 user_target_bar_path = str(Path(__file__).parent / 'user_target_bar.png')
-
+inventory_perin_converter_path = str(Path(__file__).parent / 'inventory_perin_converter.png')
+inventory_icons_path = str(Path(__file__).parent / 'inventory_icons.png')
 
 class MobName():
 	ROSPOSA = cv.imread(mob_rosposa_water_path, cv.IMREAD_GRAYSCALE)
@@ -72,3 +73,5 @@ class MobInfo():
 class GeneralAssets():
 	MOB_LIFE_BAR = cv.imread(mob_life_bar_path, cv.IMREAD_GRAYSCALE)
 	USER_TARGET_BAR = cv.imread(user_target_bar_path, cv.IMREAD_GRAYSCALE)
+	INVENTORY_PERIN_CONVERTER = cv.imread(inventory_perin_converter_path, cv.IMREAD_GRAYSCALE)
+	INVENTORY_ICONS = cv.imread(inventory_icons_path, cv.IMREAD_GRAYSCALE)

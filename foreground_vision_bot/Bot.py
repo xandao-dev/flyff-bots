@@ -4,13 +4,15 @@ from threading import Thread
 import cv2 as cv
 import numpy as np
 import pyttsx3
-import win32con
 
 from assets.Assets import GeneralAssets, MobInfo
+from utils.decorators import measure_perf
 from utils.helpers import start_countdown, get_point_near_center
+from utils.SyncedTimer import SyncedTimer
 from libs.human_mouse.HumanMouse import HumanMouse
 from libs.HumanKeyboard import VKEY, HumanKeyboard
 from libs.WindowCapture import WindowCapture
+
 
 
 class Bot:
@@ -19,16 +21,22 @@ class Bot:
             "show_frames": False,
             "show_mobs_pos_boxes": False,
             "show_mobs_pos_markers": False,
-            "mob_pos_match_threshold": 0.6,
-            "mob_still_alive_match_threshold": 0.6,
-            "mob_existence_match_threshold": 0.6,
+            "mob_pos_match_threshold": 0.7,
+            "mob_still_alive_match_threshold": 0.7,
+            "mob_existence_match_threshold": 0.7,
+            "inventory_perin_converter_match_threshold": 0.7,
+            "inventory_icons_match_threshold": 0.7,
             "mobs_kill_goal": None,
             "fight_time_limit_sec": 8,
             "delay_to_check_mob_still_alive_sec": 0.25,
+            "convert_penya_to_perins_timer_min": 30,
         }
 
         # Debug Variables
         self.image_mobs_position = None
+
+        # Synced Timers
+        self.convert_penya_to_perins_timer = SyncedTimer(self.__convert_penya_to_perins, self.config["convert_penya_to_perins_timer_min"] * 60)
 
     def setup(self, window_handler):
         self.voice_engine = pyttsx3.init()
@@ -55,21 +63,33 @@ class Bot:
             show_mobs_pos_markers: bool
                 Show the markers of the mobs positions. Default: False
             mob_pos_match_threshold: float
-                The threshold to match the mobs positions. From 0 to 1. Default: 0.6
+                The threshold to match the mobs positions. From 0 to 1. Default: 0.7
             mob_still_alive_match_threshold: float
-                The threshold to match if the mobs is still alive. From 0 to 1. Default: 0.6
+                The threshold to match if the mobs is still alive. From 0 to 1. Default: 0.7
             mob_existence_match_threshold: float
-                The threshold to match the mob existence verification. From 0 to 1. Default: 0.6
+                The threshold to match the mob existence verification. From 0 to 1. Default: 0.7
+            inventory_perin_converter_match_threshold: float
+                The threshold to match the perin converter in the inventory. From 0 to 1. Default: 0.7
+            inventory_icons_match_threshold: float
+                The threshold to match if the inventory is open. From 0 to 1. Default: 0.7
             mobs_kill_goal: int
                 The goal of mobs to kill, None for infinite. Default: None
             fight_time_limit_sec: int
                 The time limit to fight the mob, after this time it will target another monster. Unity in seconds. Default: 8
             delay_to_check_mob_still_alive_sec: float
                 The delay to check if the mob is still alive when it's fighting. Unity in seconds. Default: 0.25
+            convert_penya_to_perins_timer_min: int
+                The time to convert the penya to perins. Unity in minutes. Default: 30
         """
         for key, value in options.items():
             self.config[key] = value
 
+        self.__update_timer_configs()
+
+    def __update_timer_configs(self):
+        self.convert_penya_to_perins_timer.wait_seconds = self.config["convert_penya_to_perins_timer_min"] * 60
+
+    @measure_perf
     def __farm_thread(self, gui_window):
         start_countdown(self.voice_engine, 3)
         current_mob_info_index = 0
@@ -78,6 +98,8 @@ class Bot:
 
         while True:
             screenshot = self.window_capture.get_screenshot()
+
+            self.convert_penya_to_perins_timer(GeneralAssets.INVENTORY_ICONS, GeneralAssets.INVENTORY_PERIN_CONVERTER)
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
                 current_mob_info_index = 0
@@ -247,8 +269,9 @@ class Bot:
         self.mouse.move(to_point=mob_pos_converted, duration=0.1)
         # self.mouse.move_like_robot(mob_pos_converted)
         if self.__check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
-            self.mouse.right_click(mob_pos)
-            self.keyboard.press_key(win32con.VK_F1, press_time=0.06)
+            self.mouse.left_click(mob_pos)
+            self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
+            self.mouse.move_outside_game()
             fight_time = time()
             while True:
                 if not self.__check_mob_still_alive(mob_type_cv):
@@ -257,7 +280,7 @@ class Bot:
                 else:
                     if (time() - fight_time) >= self.config["fight_time_limit_sec"]:
                         # Unselect the mob if the fight limite is over
-                        self.keyboard.press_key(win32con.VK_ESCAPE, press_time=0.06)
+                        self.keyboard.hold_key(VKEY["esc"], press_time=0.06)
                         break
                     sleep(self.config["delay_to_check_mob_still_alive_sec"])
         return monsters_count
@@ -265,4 +288,105 @@ class Bot:
     def __mobs_not_available_on_screen(self):
         print("No Mobs in Area, moving.")
         self.keyboard.human_turn_back()
-        self.keyboard.press_key(VKEY["w"], press_time=4)
+        self.keyboard.hold_key(VKEY["w"], press_time=4)
+
+    def __check_if_inventory_is_open(self, frame, inventory_icons_cv):
+        """
+        Check if inventory is open looking if the icons of the inventory is available on the screen
+        """
+        needle_w = inventory_icons_cv.shape[0]
+        needle_h = inventory_icons_cv.shape[1]
+
+        # There are 6 methods to choose from:
+        # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
+        method = cv.TM_CCOEFF_NORMED
+        # Mask as the needle, to remove the black pixels
+        result = cv.matchTemplate(frame, inventory_icons_cv, method)
+        
+        # Get the best match position from the match result.
+        _, max_val, _, max_loc = cv.minMaxLoc(result)
+
+        if max_val < self.config["inventory_icons_match_threshold"]:
+            print(f"Inventory icons not found! Best inventory_icons_match_threshold matched value: {max_val}")
+            return False
+        print(f"Inventory icons found! Best inventory_icons_match_threshold matched value: {max_val}")
+
+        line_color = (0, 255, 0)
+        line_type = cv.LINE_4
+        top_left = (max_loc[0], max_loc[1])
+        bottom_right = (max_loc[0] + needle_w, max_loc[1] + needle_h)
+
+        cv.rectangle(frame, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
+        self.image_mobs_position = frame
+        return True
+
+    def __get_perin_converter_pos_if_available(self, frame, inventory_perin_converter_cv):
+            needle_w = inventory_perin_converter_cv.shape[0]
+            needle_h = inventory_perin_converter_cv.shape[1]
+
+            # There are 6 methods to choose from:
+            # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
+            method = cv.TM_CCOEFF_NORMED
+            result = cv.matchTemplate(frame, inventory_perin_converter_cv, method)
+
+            # Get the best match position from the match result.
+            _, max_val, _, max_loc = cv.minMaxLoc(result)
+
+            if max_val < self.config["inventory_perin_converter_match_threshold"]:
+                print(f"Inventory Perin Converter not found! Best inventory_perin_converter_match_threshold matched value: {max_val}")
+                return None
+            print(f"Inventory Perin Converter found! Best inventory_perin_converter_match_threshold matched value: {max_val}")
+            line_color = (0, 255, 0)
+            line_type = cv.LINE_4
+            top_left = (max_loc[0], max_loc[1])
+            bottom_right = (max_loc[0] + needle_w, max_loc[1] + needle_h)
+
+            cv.rectangle(frame, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
+            self.image_mobs_position = frame
+
+            center_point = (round(max_loc[0] + needle_w / 2), round(max_loc[1] + needle_h / 2))
+            return center_point
+    
+    def __convert_penya_to_perins(self, inventory_icons_cv, inventory_perin_converter_cv):
+        # Open the inventory
+        self.keyboard.press_key(VKEY["i"])
+        sleep(1)
+        frame = self.window_capture.get_screenshot()
+
+        # Check if inventory is open
+        is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)
+        if not is_inventory_open:
+            # If not open, open it
+            self.keyboard.press_key(VKEY["i"])
+            sleep(1)
+            frame = self.window_capture.get_screenshot()
+
+            # Check if inventory is open, after one failed attempt
+            is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)
+            if not is_inventory_open:
+                return False
+
+        # Check if perin converter is available
+        center_point = self.__get_perin_converter_pos_if_available(frame, inventory_perin_converter_cv)
+        if center_point is None:
+            # If not available, close the inventory and return
+            self.keyboard.press_key(VKEY["i"])
+            return False
+        
+        # Move the mouse to the perin converter and click
+        center_point_translated = self.window_capture.get_screen_position(center_point)
+        self.mouse.move(to_point=center_point_translated, duration=0.2)
+        self.mouse.left_click(center_point)
+        sleep(0.5)
+
+        # Press the convert button, based on a fixed offset from the perin converter
+        convert_all_offset = (30, 40)
+        convert_all_pos = (center_point[0] + convert_all_offset[0], center_point[1] + convert_all_offset[1])
+        convert_all_pos_converted = self.window_capture.get_screen_position(convert_all_pos)
+        self.mouse.move(to_point=convert_all_pos_converted, duration=0.2)
+        self.mouse.left_click(convert_all_pos)
+        sleep(0.5)
+
+        # Close the inventory
+        self.keyboard.press_key(VKEY["i"])
+        return True

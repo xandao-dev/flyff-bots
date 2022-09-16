@@ -1,12 +1,12 @@
-pywin32
-pyfiglet
-pynput
-opencv-python
-pyttsx3
-numpy
-pytweening
-pytesseract
-image
-keyboard
-pyautogui
-pysimplegui
+pywin32 # 304
+pyfiglet # 0.8.post1
+pynput # 1.7.6
+opencv-python # 4.6.0.66
+pyttsx3 # 2.90
+numpy # 1.23.3
+pytweening # 1.0.4
+pytesseract # 0.3.10
+image # 1.5.33
+keyboard # 0.13.5
+pyautogui # 0.9.53
+pysimplegui # 4.60.3

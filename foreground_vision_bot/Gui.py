@@ -41,6 +41,7 @@ class Gui:
         layout = self.__get_layout()
         self.window = sg.Window("Flyff FVF", layout, location=(800, 400), resizable=True, finalize=True)
         sg.cprint_set_output_destination(self.window, "-ML-")
+        self.__set_hotkeys()
         return self.window
 
     def loop(self, bot):
@@ -66,6 +67,10 @@ class Gui:
                 bot.set_config(mob_still_alive_match_threshold=values["-MOB_STILL_ALIVE_MATCH_THRESHOLD-"])
             if event == "-MOB_EXISTENCE_MATCH_THRESHOLD-":
                 bot.set_config(mob_existence_match_threshold=values["-MOB_EXISTENCE_MATCH_THRESHOLD-"])
+            if event == "-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-":
+                bot.set_config(inventory_perin_converter_match_threshold=values["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"])
+            if event == "-INVENTORY_ICONS_MATCH_THRESHOLD-":
+                bot.set_config(inventory_icons_match_threshold=values["-INVENTORY_ICONS_MATCH_THRESHOLD-"])
             if event == "-MOBS_KILL_GOAL-":
                 if ["infinity", "inf", "0", ""] in values["-MOBS_KILL_GOAL-"].lower():
                     bot.set_config(mobs_kill_goal=None)
@@ -93,6 +98,14 @@ class Gui:
                     sg.cprint("Invalid delay to check if mob is still alive")
                     self.window["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"].update("0.25")
                     bot.set_config(delay_to_check_mob_still_alive_sec=0.25)
+            if event == "-CONVERT_PENYA_TO_PERINS_TIMER_MIN-":
+                try:
+                    convert_penya_to_perins_timer_min = float(values["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"])
+                    bot.set_config(convert_penya_to_perins_timer_min=convert_penya_to_perins_timer_min)
+                except ValueError:
+                    sg.cprint("Invalid convert penya to perins timer, must be in minutes")
+                    self.window["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"].update("30")
+                    bot.set_config(convert_penya_to_perins_timer_min=30)
 
             if event in self.logger_events:
                 sg.cprint(values[event], c=self.logger_events_color[event])
@@ -117,13 +130,17 @@ class Gui:
                 img = values.get("image_mobs_position", None)
                 if img is not None:
                     resolution = values["-DEBUG_IMG_WIDTH-"]
-                    w, h = self.frame_resolutions[resolution]
+                    w, h = self.frame_resolutions[resolution] 
                     img = cv.resize(img, (w, h))
                     imgbytes = cv.imencode(".png", img)[1].tobytes()
                     self.window["-DEBUG_IMAGE-"].update(data=imgbytes)
 
     def close(self):
         self.window.close()
+
+    def __set_hotkeys(self):
+        self.window.bind("<Alt_L><s>", "-START_BOT-")
+        self.window.bind("<Alt_L><d>", "-STOP_BOT-")
 
     def __get_layout(self):
         title = [sg.Text("Flyff FVF", font="Any 18")]
@@ -139,8 +156,8 @@ class Gui:
                                     [
                                         [
                                             sg.Button("Attach Window", key="-ATTACH_WINDOW-"),
-                                            sg.Button("Start", disabled=True, key="-START_BOT-"),
-                                            sg.Button("Stop", disabled=True, key="-STOP_BOT-"),
+                                            sg.Button("Start (Alt+s)", disabled=True, key="-START_BOT-"),
+                                            sg.Button("Stop (Alt+d)", disabled=True, key="-STOP_BOT-"),
                                             sg.Button("Exit"),
                                         ]
                                     ],
@@ -165,7 +182,7 @@ class Gui:
                             [
                                 sg.Slider(
                                     (0.1, 0.9),
-                                    0.6,
+                                    0.7,
                                     0.05,
                                     enable_events=True,
                                     orientation="h",
@@ -177,7 +194,7 @@ class Gui:
                             [
                                 sg.Slider(
                                     (0.1, 0.9),
-                                    0.6,
+                                    0.7,
                                     0.05,
                                     enable_events=True,
                                     orientation="h",
@@ -189,7 +206,7 @@ class Gui:
                             [
                                 sg.Slider(
                                     (0.1, 0.9),
-                                    0.6,
+                                    0.7,
                                     0.05,
                                     enable_events=True,
                                     orientation="h",
@@ -197,17 +214,45 @@ class Gui:
                                     key="-MOB_EXISTENCE_MATCH_THRESHOLD-",
                                 ),
                             ],
+                            [sg.Text("Inventory perin converter match threshold:")],
+                            [
+                                sg.Slider(
+                                    (0.1, 0.9),
+                                    0.7,
+                                    0.05,
+                                    enable_events=True,
+                                    orientation="h",
+                                    size=(20, 15),
+                                    key="-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-",
+                                ),
+                            ],
+                            [sg.Text("Inventory icons match threshold:")],
+                            [
+                                sg.Slider(
+                                    (0.1, 0.9),
+                                    0.7,
+                                    0.05,
+                                    enable_events=True,
+                                    orientation="h",
+                                    size=(20, 15),
+                                    key="-INVENTORY_ICONS_MATCH_THRESHOLD-",
+                                ),
+                            ],
                             [
                                 sg.Text("Mobs kill goal:"),
-                                sg.InputText("infinity", size=(10, 1), key="-MOBS_KILL_GOAL-"),
+                                sg.InputText("infinity", size=(10, 1), enable_events=True, key="-MOBS_KILL_GOAL-"),
                             ],
                             [
                                 sg.Text("Fight Time Limit (s):"),
-                                sg.InputText("8", size=(10, 1), key="-FIGHT_TIME_LIMIT_SEC-"),
+                                sg.InputText("8", size=(10, 1), enable_events=True, key="-FIGHT_TIME_LIMIT_SEC-"),
                             ],
                             [sg.Text("Delay to check if mob is still alive (s):")],
                             [
-                                sg.InputText("0.25", size=(10, 1), key="-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"),
+                                sg.InputText("0.25", size=(10, 1), enable_events=True, key="-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"),
+                            ],
+                            [sg.Text("Timer to convert penya to perins (m):")],
+                            [
+                                sg.InputText("30", size=(10, 1), enable_events=True, key="-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"),
                             ],
                         ],
                     )

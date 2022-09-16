@@ -1,4 +1,5 @@
-from time import sleep
+import threading
+import time
 from collections import deque
 
 import win32gui
@@ -22,7 +23,7 @@ def get_focused_window_handle(voice_engine):
         mouse_listener.join()
 
     print("Window Selected: ", win32gui.GetWindowText(hwnd[0]))
-    sleep(0.5)
+    time.sleep(0.5)
     return hwnd[0]
 
 
@@ -62,7 +63,7 @@ def start_countdown(voice_engine, sleep_time_sec=5):
     print("Starting", end="")
     for i in range(10):
         print(".", end="")
-        sleep(sleep_time_sec / 10)
+        time.sleep(sleep_time_sec / 10)
     print("\nReady, forcing dwarves to work!")
 
 

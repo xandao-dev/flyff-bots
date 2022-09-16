@@ -46,6 +46,14 @@ class HumanMouse:
 		if set_position and pos:
 			win32api.SetCursorPos(pos)
 			sleep(round(uniform(0.04, 0.07), 4))
+		win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0)
+		sleep(round(uniform(0.010, 0.025), 4))
+		win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0)
+
+	def left_click(self, pos=None, set_position=False):
+		if set_position and pos:
+			win32api.SetCursorPos(pos)
+			sleep(round(uniform(0.04, 0.07), 4))
 		win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
 		sleep(round(uniform(0.010, 0.025), 4))
 		win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
