@@ -301,7 +301,7 @@ class Bot:
         # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
         method = cv.TM_CCOEFF_NORMED
         # Mask as the needle, to remove the black pixels
-        result = cv.matchTemplate(frame, inventory_trash_cv, method, mask=inventory_trash_cv)
+        result = cv.matchTemplate(frame, inventory_trash_cv, method)
         
         # Get the best match position from the match result.
         _, max_val, _, max_loc = cv.minMaxLoc(result)
@@ -350,7 +350,7 @@ class Bot:
     def __convert_penya_to_perins(self, inventory_trash_cv, inventory_perin_converter_cv):
         # Open the inventory
         self.keyboard.press_key(VKEY["i"])
-        sleep(0.5)
+        sleep(1)
         frame = self.window_capture.get_screenshot()
 
         # Check if inventory is open
@@ -358,7 +358,7 @@ class Bot:
         if not is_inventory_open:
             # If not open, open it
             self.keyboard.press_key(VKEY["i"])
-            sleep(0.5)
+            sleep(1)
             frame = self.window_capture.get_screenshot()
 
             # Check if inventory is open, after one failed attempt
@@ -385,7 +385,7 @@ class Bot:
         convert_all_pos_converted = self.window_capture.get_screen_position(convert_all_pos)
         self.mouse.move(to_point=convert_all_pos_converted, duration=0.2)
         self.mouse.left_click(convert_all_pos)
-        sleep(0.2)
+        sleep(0.5)
 
         # Close the inventory
         self.keyboard.press_key(VKEY["i"])
