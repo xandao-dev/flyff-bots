@@ -25,7 +25,7 @@ class Bot:
             "mob_still_alive_match_threshold": 0.7,
             "mob_existence_match_threshold": 0.7,
             "inventory_perin_converter_match_threshold": 0.7,
-            "inventory_trash_match_threshold": 0.7,
+            "inventory_icons_match_threshold": 0.7,
             "mobs_kill_goal": None,
             "fight_time_limit_sec": 8,
             "delay_to_check_mob_still_alive_sec": 0.25,
@@ -70,7 +70,7 @@ class Bot:
                 The threshold to match the mob existence verification. From 0 to 1. Default: 0.7
             inventory_perin_converter_match_threshold: float
                 The threshold to match the perin converter in the inventory. From 0 to 1. Default: 0.7
-            inventory_trash_match_threshold: float
+            inventory_icons_match_threshold: float
                 The threshold to match if the inventory is open. From 0 to 1. Default: 0.7
             mobs_kill_goal: int
                 The goal of mobs to kill, None for infinite. Default: None
@@ -99,7 +99,7 @@ class Bot:
         while True:
             screenshot = self.window_capture.get_screenshot()
 
-            self.convert_penya_to_perins_timer(GeneralAssets.INVENTORY_TRASH, GeneralAssets.INVENTORY_PERIN_CONVERTER)
+            self.convert_penya_to_perins_timer(GeneralAssets.INVENTORY_ICONS, GeneralAssets.INVENTORY_PERIN_CONVERTER)
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
                 current_mob_info_index = 0
@@ -290,26 +290,26 @@ class Bot:
         self.keyboard.human_turn_back()
         self.keyboard.hold_key(VKEY["w"], press_time=4)
 
-    def __check_if_inventory_is_open(self, frame, inventory_trash_cv):
+    def __check_if_inventory_is_open(self, frame, inventory_icons_cv):
         """
-        Check if inventory is open looking if the trash icon of the inventory is available on the screen
+        Check if inventory is open looking if the icons of the inventory is available on the screen
         """
-        needle_w = inventory_trash_cv.shape[0]
-        needle_h = inventory_trash_cv.shape[1]
+        needle_w = inventory_icons_cv.shape[0]
+        needle_h = inventory_icons_cv.shape[1]
 
         # There are 6 methods to choose from:
         # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
         method = cv.TM_CCOEFF_NORMED
         # Mask as the needle, to remove the black pixels
-        result = cv.matchTemplate(frame, inventory_trash_cv, method)
+        result = cv.matchTemplate(frame, inventory_icons_cv, method)
         
         # Get the best match position from the match result.
         _, max_val, _, max_loc = cv.minMaxLoc(result)
 
-        if max_val < self.config["inventory_trash_match_threshold"]:
-            print(f"Inventory Trash not found! Best inventory_trash_match_threshold matched value: {max_val}")
+        if max_val < self.config["inventory_icons_match_threshold"]:
+            print(f"Inventory icons not found! Best inventory_icons_match_threshold matched value: {max_val}")
             return False
-        print(f"Inventory Trash found! Best inventory_trash_match_threshold matched value: {max_val}")
+        print(f"Inventory icons found! Best inventory_icons_match_threshold matched value: {max_val}")
 
         line_color = (0, 255, 0)
         line_type = cv.LINE_4
@@ -347,14 +347,14 @@ class Bot:
             center_point = (round(max_loc[0] + needle_w / 2), round(max_loc[1] + needle_h / 2))
             return center_point
     
-    def __convert_penya_to_perins(self, inventory_trash_cv, inventory_perin_converter_cv):
+    def __convert_penya_to_perins(self, inventory_icons_cv, inventory_perin_converter_cv):
         # Open the inventory
         self.keyboard.press_key(VKEY["i"])
         sleep(1)
         frame = self.window_capture.get_screenshot()
 
         # Check if inventory is open
-        is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_trash_cv)
+        is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)
         if not is_inventory_open:
             # If not open, open it
             self.keyboard.press_key(VKEY["i"])
@@ -362,7 +362,7 @@ class Bot:
             frame = self.window_capture.get_screenshot()
 
             # Check if inventory is open, after one failed attempt
-            is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_trash_cv)
+            is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)
             if not is_inventory_open:
                 return False
 

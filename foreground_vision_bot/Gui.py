@@ -69,8 +69,8 @@ class Gui:
                 bot.set_config(mob_existence_match_threshold=values["-MOB_EXISTENCE_MATCH_THRESHOLD-"])
             if event == "-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-":
                 bot.set_config(inventory_perin_converter_match_threshold=values["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"])
-            if event == "-INVENTORY_TRASH_MATCH_THRESHOLD-":
-                bot.set_config(inventory_trash_match_threshold=values["-INVENTORY_TRASH_MATCH_THRESHOLD-"])
+            if event == "-INVENTORY_ICONS_MATCH_THRESHOLD-":
+                bot.set_config(inventory_icons_match_threshold=values["-INVENTORY_ICONS_MATCH_THRESHOLD-"])
             if event == "-MOBS_KILL_GOAL-":
                 if ["infinity", "inf", "0", ""] in values["-MOBS_KILL_GOAL-"].lower():
                     bot.set_config(mobs_kill_goal=None)
@@ -226,7 +226,7 @@ class Gui:
                                     key="-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-",
                                 ),
                             ],
-                            [sg.Text("Inventory trash icon match threshold:")],
+                            [sg.Text("Inventory icons match threshold:")],
                             [
                                 sg.Slider(
                                     (0.1, 0.9),
@@ -235,7 +235,7 @@ class Gui:
                                     enable_events=True,
                                     orientation="h",
                                     size=(20, 15),
-                                    key="-INVENTORY_TRASH_MATCH_THRESHOLD-",
+                                    key="-INVENTORY_ICONS_MATCH_THRESHOLD-",
                                 ),
                             ],
                             [
