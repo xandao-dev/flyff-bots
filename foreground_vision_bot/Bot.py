@@ -1,8 +1,5 @@
 from time import sleep, time
 from threading import Thread
-
-import cv2 as cv
-import numpy as np
 import pyttsx3
 
 from assets.Assets import GeneralAssets, MobInfo
@@ -34,6 +31,10 @@ class Bot:
 
         self.frame = None
         self.debug_frame = None
+
+        self.current_mob = None
+        self.current_mob_type = None
+        self.current_mob_offset = None
 
         # Synced Timers
         self.convert_penya_to_perins_timer = SyncedTimer(
@@ -106,6 +107,9 @@ class Bot:
                 current_mob_info_index = 0
             mob_name_cv, mob_type_cv, mob_height_offset = self.all_mobs[current_mob_info_index]
 
+            self.current_mob = mob_name_cv
+            self.current_mob_type = mob_type_cv
+            self.current_mob_offset = mob_height_offset
             matches = self.__get_mobs_position(mob_name_cv, mob_height_offset)
             # print("Mobs positions: ", matches)
 
@@ -135,9 +139,13 @@ class Bot:
     def __get_frame_thread(self, gui_window):
         while True:
             self.debug_frame, self.frame = self.window_capture.get_screenshot()
+            self.__get_mobs_position(self.current_mob, self.current_mob_offset)
             gui_window.write_event_value("debug_frame", self.debug_frame)
 
     def __get_mobs_position(self, mob_name_cv, mob_height_offset):
+        if mob_name_cv is None or mob_height_offset is None:
+            return []
+
         # frame_cute_area 50px from each side of the frame to avoid some UI elements
         matches, drawn_frame = CV.match_template_multi(
             frame=self.frame,
@@ -225,7 +233,7 @@ class Bot:
         print("No Mobs in Area, moving.")
         self.keyboard.human_turn_back()
         self.keyboard.hold_key(VKEY["w"], press_time=4)
-        time.sleep(0.1)
+        sleep(0.1)
         self.keyboard.press_key(VKEY["s"])
 
     def __check_if_inventory_is_open(self, inventory_icons_cv):
