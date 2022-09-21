@@ -16,34 +16,49 @@ class ComputerVision:
         pass
 
     @staticmethod
-    def match_template(frame, template, method=MATCH_METHODS["TM_CCOEFF_NORMED"], threshold=0.7, draw=True):
+    def match_template(
+        frame,
+        frame_cut_area=(0, 0, 0, 0),
+        template=None,
+        method=MATCH_METHODS["TM_CCOEFF_NORMED"],
+        threshold=0.7,
+        frame_to_draw=None,
+        draw=True,
+    ):
         """
         Match template in a frame.
 
         :param frame: Frame to search in.
-        :param template: Template to search for.
+        :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
+            Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0).
+        :param template: Template to search for. Default is None, but it's required.
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
         :param threshold: Threshold to use for matching. Default is 0.7.
+        :param frame_to_draw: Frame to draw on. Default is None, which will not draw.
         :param draw: Draw rectangle around the match. Default: True.
 
-        :return: max_val, max_loc, center_loc, pass_threshold, frame
+        :return: max_val, max_loc, center_loc, passed_threshold, drawn_frame
         """
+        # Cut frame if needed
+        frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
+
         template_h = template.shape[0]
         template_w = template.shape[1]
         result = cv.matchTemplate(frame, template, method)
         _, max_val, _, max_loc = cv.minMaxLoc(result)
-        center_loc = (max_loc[0] + template_w // 2, max_loc[1] + template_h // 2)
-        pass_threshold = max_val >= threshold
+        max_loc_corrected = (max_loc[0] + frame_cut_area[2], max_loc[1] + frame_cut_area[0])
+        center_loc = (max_loc_corrected[0] + template_w // 2, max_loc_corrected[1] + template_h // 2)
+        passed_threshold = max_val >= threshold
 
-        # Draw a rectangle around the match, that's why we return the frame
-        if draw:
+        if frame_to_draw is not None and draw:
             line_color = (0, 255, 0)
             line_type = cv.LINE_4
-            top_left = max_loc
+            top_left = max_loc_corrected
             bottom_right = (top_left[0] + template_w, top_left[1] + template_h)
-            cv.rectangle(frame, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
+            cv.rectangle(frame_to_draw, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
 
-        return max_val, max_loc, center_loc, pass_threshold, frame
+        drawn_frame = frame_to_draw
+        return max_val, max_loc_corrected, center_loc, passed_threshold, drawn_frame
 
     @staticmethod
     def match_template_multi(
@@ -61,8 +76,8 @@ class ComputerVision:
         Match template, multiple times, in image. Return only the matches that pass the threshold.
 
         :param frame: Frame to search in.
-        :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right). 
-            Eg.: (50, 50, 50, 50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0).
+        :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
+            Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0).
         :param template: Template to search for. Default is None, but it's required.
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
         :param threshold: Threshold to use for matching. Default is 0.7.
@@ -73,9 +88,9 @@ class ComputerVision:
 
         :return: matches, drawn_frame
         """
-        # Cut frame
-        frame = frame[frame_cut_area[0] : -frame_cut_area[1], frame_cut_area[2] : -frame_cut_area[3]]
-
+        # Cut frame if needed
+        frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
+        
         template_h = template.shape[0]
         template_w = template.shape[1]
         result = cv.matchTemplate(frame, template, method)
@@ -108,7 +123,7 @@ class ComputerVision:
                 # Determine the center position, initial point + half size + correction
                 center_x = x + (w // 2) + frame_cut_area[2]
                 center_y = y + (h // 2) + frame_cut_area[0]
-                
+
                 # Save the matches
                 matches.append((center_x, center_y))
 

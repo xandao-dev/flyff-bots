@@ -136,7 +136,7 @@ class Bot:
         # frame_cute_area 50px from each side of the frame to avoid some UI elements
         matches, drawn_frame = CV.match_template_multi(
             frame=frame,
-            frame_cut_area=(50, 50, 50, 50),
+            frame_cut_area=(50, -50, 50, -50),
             template=mob_name_cv,
             threshold=self.config["mob_pos_match_threshold"],
             box_offset=(0, mob_height_offset),
@@ -152,34 +152,40 @@ class Bot:
         Check if the mob is still alive by checking if the mob type icon is still visible.
         """
         debug_frame, frame = self.window_capture.get_screenshot()
-        frame_w = frame.shape[1]
 
-        # Get the top of the screen to see if the mob life bar exists
-        top_image = frame[0 : 0 + 50, 200 : frame_w - 200]
-
-        max_val, _, _, pass_threshold, frame = CV.match_template(
-            frame=top_image, template=mob_type_cv, threshold=self.config["mob_still_alive_match_threshold"]
+        # frame_cute_area get the top of the screen to see if the mob type icon is still visible
+        max_val, _, _, passed_threshold, drawn_frame = CV.match_template(
+            frame=frame,
+            frame_cut_area=(0, 50, 200, -200),
+            template=mob_type_cv,
+            threshold=self.config["mob_still_alive_match_threshold"],
+            frame_to_draw=debug_frame,
         )
-        self.image_mob_still_alive = frame
+        self.debug_frame = drawn_frame
 
-        if pass_threshold:
+        if passed_threshold:
             print(f"Mob still alive. mob_still_alive_match_threshold: {max_val}")
             return True
         else:
             print(f"No mob selected. mob_still_alive_match_threshold: {max_val}")
             return False
 
-    def __check_mob_existence(self, mob_life_bar, top_image):
+    def __check_mob_existence(self, mob_life_bar, frame):
         """
         Check if the mob exists by checking if the mob life bar exists.
         """
 
-        max_val, _, _, pass_threshold, frame = CV.match_template(
-            frame=top_image, template=mob_life_bar, threshold=self.config["mob_existence_match_threshold"]
+        # frame_cute_area get the top of the screen to see if the mob life bar exists
+        max_val, _, _, passed_threshold, drawn_frame = CV.match_template(
+            frame=frame,
+            frame_cut_area=(0, 50, 200, -200),
+            template=mob_life_bar,
+            threshold=self.config["mob_existence_match_threshold"],
+            frame_to_draw=self.debug_frame,
         )
-        # self.debug_frame = frame
+        self.debug_frame = drawn_frame
 
-        if pass_threshold:
+        if passed_threshold:
             print(f"Mob found! mob_existence_match_threshold: {max_val}")
             return True
         else:
@@ -191,14 +197,11 @@ class Bot:
         frame_h = frame.shape[0]
         frame_center = (frame_w // 2, frame_h // 2)
 
-        # Get the top of the screen
-        top_image = frame[0 : 0 + 50, 200 : frame_w - 200]
-
         monsters_count = mobs_killed
         mob_pos = get_point_near_center(frame_center, points)
         mob_pos_converted = self.window_capture.get_screen_position(mob_pos)
         self.mouse.move(to_point=mob_pos_converted, duration=0.1)
-        if self.__check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
+        if self.__check_mob_existence(GeneralAssets.MOB_LIFE_BAR, frame):
             self.mouse.left_click(mob_pos)
             self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
             self.mouse.move_outside_game()
@@ -226,11 +229,11 @@ class Bot:
         """
         Check if inventory is open looking if the icons of the inventory is available on the screen
         """
-        max_val, _, _, pass_threshold, frame = self.__check_if_inventory_is_open_cv(
+        max_val, _, _, passed_threshold, frame = self.__check_if_inventory_is_open_cv(
             frame=frame, template=inventory_icons_cv, threshold=self.config["inventory_icons_match_threshold"]
         )
         # self.debug_frame = frame
-        if pass_threshold:
+        if passed_threshold:
             print(f"Inventory is open! inventory_icons_match_threshold: {max_val}")
             return True
         print(f"Inventory is closed! inventory_icons_match_threshold: {max_val}")
@@ -240,14 +243,18 @@ class Bot:
         """
         Get position of perin converter button in inventory, if available, otherwise return None
         """
-        max_val, _, center_loc, pass_threshold, frame = CV.match_template(
+
+        # frame_cute_area 300px from top, because the inventory is big
+        max_val, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
             frame=frame,
+            frame_cut_area=(300, 0, 0, 0),
             template=inventory_perin_converter_cv,
             threshold=self.config["inventory_perin_converter_match_threshold"],
+            frame_to_draw=self.debug_frame,
         )
-        # self.debug_frame = frame
+        self.debug_frame = drawn_frame
 
-        if pass_threshold:
+        if passed_threshold:
             print(f"Perin converter found! inventory_perin_converter_match_threshold: {max_val}")
             return center_loc
         print(f"Perin converter not found! inventory_perin_converter_match_threshold: {max_val}")
