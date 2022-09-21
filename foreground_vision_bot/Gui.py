@@ -114,7 +114,7 @@ class Gui:
                 window_handler = self.__attach_window_popup()
                 if window_handler:
                     bot.stop()
-                    bot.setup(window_handler)
+                    bot.setup(window_handler, self.window)
                     self.window["-START_BOT-"].update(disabled=False)
                     self.window["-STOP_BOT-"].update(disabled=True)
             if event == "-START_BOT-":
