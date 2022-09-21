@@ -222,6 +222,9 @@ class Bot:
         print("No Mobs in Area, moving.")
         self.keyboard.human_turn_back()
         self.keyboard.hold_key(VKEY["w"], press_time=4)
+        time.sleep(0.1)
+        self.keyboard.press_key(VKEY["s"])
+
 
     def __check_if_inventory_is_open(self, frame, inventory_icons_cv):
         """
