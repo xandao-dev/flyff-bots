@@ -127,7 +127,7 @@ class Gui:
                 self.window["-STOP_BOT-"].update(disabled=True)
 
             if values["-SHOW_FRAMES-"]:
-                img = values.get("image_mobs_position", None)
+                img = values.get("debug_frame", None)
                 if img is not None:
                     resolution = values["-DEBUG_IMG_WIDTH-"]
                     w, h = self.frame_resolutions[resolution] 

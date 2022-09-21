@@ -33,7 +33,7 @@ class Bot:
         }
 
         # Debug Variables
-        self.image_mobs_position = None
+        self.debug_frame = None
 
         # Synced Timers
         self.convert_penya_to_perins_timer = SyncedTimer(
@@ -99,8 +99,7 @@ class Bot:
         loop_time = time()
 
         while True:
-            frame = self.window_capture.get_screenshot()
-
+            self.debug_frame, frame = self.window_capture.get_screenshot()
             self.convert_penya_to_perins_timer(GeneralAssets.INVENTORY_ICONS, GeneralAssets.INVENTORY_PERIN_CONVERTER)
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
@@ -124,7 +123,7 @@ class Bot:
                 break
 
             if self.config["show_frames"]:
-                gui_window.write_event_value("image_mobs_position", self.image_mobs_position)
+                gui_window.write_event_value("debug_frame", self.debug_frame)
 
             gui_window.write_event_value("msg_purple", f"Video FPS: {round(1 / (time() - loop_time))}")
             gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
@@ -134,27 +133,25 @@ class Bot:
                 break
 
     def __get_mobs_position(self, mob_name_cv, frame, mob_height_offset):
-        # Cut 50px from each side of the frame to avoid some UI elements
-        frame = frame[50:-50, 50:-50]
-        matches, frame = CV.match_template_multi(
+        # frame_cute_area 50px from each side of the frame to avoid some UI elements
+        matches, drawn_frame = CV.match_template_multi(
             frame=frame,
+            frame_cut_area=(50, 50, 50, 50),
             template=mob_name_cv,
             threshold=self.config["mob_pos_match_threshold"],
             box_offset=(0, mob_height_offset),
+            frame_to_draw=self.debug_frame,
             draw_rect=self.config["show_mobs_pos_boxes"],
             draw_marker=self.config["show_mobs_pos_markers"],
         )
-        # Add 50px to the x and y positions to compensate the cut
-        matches = [(x + 50, y + 50) for x, y in matches]
-
-        self.image_mobs_position = frame
+        self.debug_frame = drawn_frame
         return matches
 
     def __check_mob_still_alive(self, mob_type_cv):
         """
         Check if the mob is still alive by checking if the mob type icon is still visible.
         """
-        frame = self.window_capture.get_screenshot()
+        debug_frame, frame = self.window_capture.get_screenshot()
         frame_w = frame.shape[1]
 
         # Get the top of the screen to see if the mob life bar exists
@@ -180,7 +177,7 @@ class Bot:
         max_val, _, _, pass_threshold, frame = CV.match_template(
             frame=top_image, template=mob_life_bar, threshold=self.config["mob_existence_match_threshold"]
         )
-        # self.image_mobs_position = frame
+        # self.debug_frame = frame
 
         if pass_threshold:
             print(f"Mob found! mob_existence_match_threshold: {max_val}")
@@ -225,7 +222,6 @@ class Bot:
         time.sleep(0.1)
         self.keyboard.press_key(VKEY["s"])
 
-
     def __check_if_inventory_is_open(self, frame, inventory_icons_cv):
         """
         Check if inventory is open looking if the icons of the inventory is available on the screen
@@ -233,7 +229,7 @@ class Bot:
         max_val, _, _, pass_threshold, frame = self.__check_if_inventory_is_open_cv(
             frame=frame, template=inventory_icons_cv, threshold=self.config["inventory_icons_match_threshold"]
         )
-        # self.image_mobs_position = frame
+        # self.debug_frame = frame
         if pass_threshold:
             print(f"Inventory is open! inventory_icons_match_threshold: {max_val}")
             return True
@@ -249,7 +245,7 @@ class Bot:
             template=inventory_perin_converter_cv,
             threshold=self.config["inventory_perin_converter_match_threshold"],
         )
-        # self.image_mobs_position = frame
+        # self.debug_frame = frame
 
         if pass_threshold:
             print(f"Perin converter found! inventory_perin_converter_match_threshold: {max_val}")
@@ -260,7 +256,7 @@ class Bot:
         # Open the inventory
         self.keyboard.press_key(VKEY["i"])
         sleep(1)
-        frame = self.window_capture.get_screenshot()
+        debug_frame, frame = self.window_capture.get_screenshot()
 
         # Check if inventory is open
         is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)
@@ -268,7 +264,7 @@ class Bot:
             # If not open, open it
             self.keyboard.press_key(VKEY["i"])
             sleep(1)
-            frame = self.window_capture.get_screenshot()
+            debug_frame, frame = self.window_capture.get_screenshot()
 
             # Check if inventory is open, after one failed attempt
             is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)

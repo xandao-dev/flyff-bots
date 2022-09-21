@@ -46,20 +46,36 @@ class ComputerVision:
         return max_val, max_loc, center_loc, pass_threshold, frame
 
     @staticmethod
-    def match_template_multi(frame, template, method=MATCH_METHODS["TM_CCOEFF_NORMED"], threshold=0.7, box_offset=(0, 0), draw_rect=True, draw_marker=False):
+    def match_template_multi(
+        frame,
+        frame_cut_area=(0, 0, 0, 0),
+        template=None,
+        method=MATCH_METHODS["TM_CCOEFF_NORMED"],
+        threshold=0.7,
+        box_offset=(0, 0),
+        frame_to_draw=None,
+        draw_rect=True,
+        draw_marker=False,
+    ):
         """
         Match template, multiple times, in image. Return only the matches that pass the threshold.
 
         :param frame: Frame to search in.
-        :param template: Template to search for.
+        :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right). 
+            Eg.: (50, 50, 50, 50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0).
+        :param template: Template to search for. Default is None, but it's required.
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
         :param threshold: Threshold to use for matching. Default is 0.7.
         :param box_offset: Increase the box size by this offset. Default is (0, 0) for (width, height).
+        :param frame_to_draw: Frame to draw on. Default is None, which will not draw.
         :param draw_rect: Draw rectangle around the match. Default: True.
         :param draw_marker: Draw marker at the center of the match. Default: False.
 
-        :return: matches, frame
+        :return: matches, drawn_frame
         """
+        # Cut frame
+        frame = frame[frame_cut_area[0] : -frame_cut_area[1], frame_cut_area[2] : -frame_cut_area[3]]
+
         template_h = template.shape[0]
         template_w = template.shape[1]
         result = cv.matchTemplate(frame, template, method)
@@ -82,37 +98,44 @@ class ComputerVision:
         # The groupThreshold parameter should usually be 1. If you put it at 0 then no grouping is done.
         # If you put it at 2 then an object needs at least 3 overlapping rectangles to appear
         # eps 0.5 means: "Relative difference between sides of the rectangles to merge them into a group."
-        rectangles, weights = cv.groupRectangles(rectangles, groupThreshold=1, eps=0.5)
+        rectangles, _ = cv.groupRectangles(rectangles, groupThreshold=1, eps=0.5)
         # print(rectangles)
 
         matches = []
         if len(rectangles):
             # print('Found template')
             for (x, y, w, h) in rectangles:
-                # Determine the center position
-                center_x = x + w // 2
-                center_y = y + h // 2
+                # Determine the center position, initial point + half size + correction
+                center_x = x + (w // 2) + frame_cut_area[2]
+                center_y = y + (h // 2) + frame_cut_area[0]
+                
                 # Save the matches
                 matches.append((center_x, center_y))
+
+                if frame_to_draw is None:
+                    continue
 
                 if draw_rect:
                     line_color = (0, 255, 0)
                     line_type = cv.LINE_4
-                    top_left = (x, y)
-                    bottom_right = (x + w, y + h)
-                    cv.rectangle(frame, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
+                    top_left = (x + frame_cut_area[2], y + frame_cut_area[0])
+                    bottom_right = (x + w + frame_cut_area[2], y + h + frame_cut_area[0])
+                    cv.rectangle(
+                        frame_to_draw, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2
+                    )
                 if draw_marker:
                     marker_color = (255, 0, 255)
                     marker_type = cv.MARKER_CROSS
                     cv.drawMarker(
-                        frame,
+                        frame_to_draw,
                         (center_x, center_y),
                         color=marker_color,
                         markerType=marker_type,
                         markerSize=40,
                         thickness=2,
                     )
-                    # cv.putText(frame, f'({center_x}, {center_y})', (x+w, y+h),
+                    # cv.putText(frame_to_draw, f'({center_x}, {center_y})', (x+w, y+h),
                     # cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
-        return matches, frame
+        drawn_frame = frame_to_draw
+        return matches, drawn_frame
