@@ -101,7 +101,7 @@ class Bot:
         loop_time = time()
 
         while True:
-            self.convert_penya_to_perins_timer(GeneralAssets.INVENTORY_ICONS, GeneralAssets.INVENTORY_PERIN_CONVERTER)
+            self.convert_penya_to_perins_timer()
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
                 current_mob_info_index = 0
@@ -181,7 +181,7 @@ class Bot:
             print(f"No mob selected. mob_still_alive_match_threshold: {max_val}")
             return False
 
-    def __check_mob_existence(self, mob_life_bar):
+    def __check_mob_existence(self):
         """
         Check if the mob exists by checking if the mob life bar exists.
         """
@@ -190,7 +190,7 @@ class Bot:
         max_val, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             frame_cut_area=(0, 50, 200, -200),
-            template=mob_life_bar,
+            template=GeneralAssets.MOB_LIFE_BAR,
             threshold=self.config["mob_existence_match_threshold"],
             frame_to_draw=self.debug_frame,
         )
@@ -212,7 +212,7 @@ class Bot:
         mob_pos = get_point_near_center(frame_center, points)
         mob_pos_converted = self.window_capture.get_screen_position(mob_pos)
         self.mouse.move(to_point=mob_pos_converted, duration=0.1)
-        if self.__check_mob_existence(GeneralAssets.MOB_LIFE_BAR):
+        if self.__check_mob_existence():
             self.mouse.left_click(mob_pos)
             self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
             self.mouse.move_outside_game()
@@ -236,12 +236,12 @@ class Bot:
         sleep(0.1)
         self.keyboard.press_key(VKEY["s"])
 
-    def __check_if_inventory_is_open(self, inventory_icons_cv):
+    def __check_if_inventory_is_open(self):
         """
         Check if inventory is open looking if the icons of the inventory is available on the screen
         """
         max_val, _, _, passed_threshold, drawn_frame = self.match_template(
-            frame=self.frame, template=inventory_icons_cv, threshold=self.config["inventory_icons_match_threshold"], frame_to_draw=self.debug_frame
+            frame=self.frame, template=GeneralAssets.INVENTORY_ICONS, threshold=self.config["inventory_icons_match_threshold"], frame_to_draw=self.debug_frame
         )
         self.debug_frame = drawn_frame
         if passed_threshold:
@@ -250,7 +250,7 @@ class Bot:
         print(f"Inventory is closed! inventory_icons_match_threshold: {max_val}")
         return False
 
-    def __get_perin_converter_pos_if_available(self, inventory_perin_converter_cv):
+    def __get_perin_converter_pos_if_available(self):
         """
         Get position of perin converter button in inventory, if available, otherwise return None
         """
@@ -259,7 +259,7 @@ class Bot:
         max_val, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             frame_cut_area=(300, 0, 0, 0),
-            template=inventory_perin_converter_cv,
+            template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
             threshold=self.config["inventory_perin_converter_match_threshold"],
             frame_to_draw=self.debug_frame,
         )
@@ -270,24 +270,24 @@ class Bot:
             return center_loc
         print(f"Perin converter not found! inventory_perin_converter_match_threshold: {max_val}")
 
-    def __convert_penya_to_perins(self, inventory_icons_cv, inventory_perin_converter_cv):
+    def __convert_penya_to_perins(self):
         # Open the inventory
         self.keyboard.press_key(VKEY["i"])
         sleep(1)
         # Check if inventory is open
-        is_inventory_open = self.__check_if_inventory_is_open(inventory_icons_cv)
+        is_inventory_open = self.__check_if_inventory_is_open()
         if not is_inventory_open:
             # If not open, open it
             self.keyboard.press_key(VKEY["i"])
             sleep(1)
 
             # Check if inventory is open, after one failed attempt
-            is_inventory_open = self.__check_if_inventory_is_open(inventory_icons_cv)
+            is_inventory_open = self.__check_if_inventory_is_open()
             if not is_inventory_open:
                 return False
 
         # Check if perin converter is available
-        center_point = self.__get_perin_converter_pos_if_available(inventory_perin_converter_cv)
+        center_point = self.__get_perin_converter_pos_if_available()
         if center_point is None:
             # If not available, close the inventory and return
             self.keyboard.press_key(VKEY["i"])
