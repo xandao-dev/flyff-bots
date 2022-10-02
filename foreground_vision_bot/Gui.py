@@ -39,7 +39,7 @@ class Gui:
 
     def init(self):
         layout = self.__get_layout()
-        self.window = sg.Window("Flyff FVF", layout, location=(800, 400), resizable=True, finalize=True)
+        self.window = sg.Window("Flyff FVF", layout, location=(0, 0), resizable=True, finalize=True)
         sg.cprint_set_output_destination(self.window, "-ML-")
         self.__set_hotkeys()
         return self.window

@@ -31,6 +31,7 @@ class Bot:
 
         self.frame = None
         self.debug_frame = None
+        self.__farm_thread_running = False
 
         self.current_mob = None
         self.current_mob_type = None
@@ -105,16 +106,12 @@ class Bot:
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
                 current_mob_info_index = 0
-            mob_name_cv, mob_type_cv, mob_height_offset = self.all_mobs[current_mob_info_index]
-
-            self.current_mob = mob_name_cv
-            self.current_mob_type = mob_type_cv
-            self.current_mob_offset = mob_height_offset
-            matches = self.__get_mobs_position(mob_name_cv, mob_height_offset)
+            self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
+            matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset)
             # print("Mobs positions: ", matches)
 
             if matches:
-                mobs_killed = self.__mobs_available_on_screen(mob_type_cv, matches, mobs_killed)
+                mobs_killed = self.__mobs_available_on_screen(self.current_mob_type, matches, mobs_killed)
             else:
                 # TODO: Turn around and check for mobs first before changing the current mob
                 current_mob_info_index += 1
@@ -137,12 +134,22 @@ class Bot:
                 break
 
     def __get_frame_thread(self, gui_window):
+        current_mob_info_index = 0
         while True:
             self.debug_frame, self.frame = self.window_capture.get_screenshot()
-            self.__get_mobs_position(self.current_mob, self.current_mob_offset)
+
+            if current_mob_info_index >= (len(self.all_mobs) - 1):
+                current_mob_info_index = 0
+            self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
+
+            matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset, debug=True)
+
+            if not matches:
+                current_mob_info_index += 1
+
             gui_window.write_event_value("debug_frame", self.debug_frame)
 
-    def __get_mobs_position(self, mob_name_cv, mob_height_offset):
+    def __get_mobs_position(self, mob_name_cv, mob_height_offset, debug=False):
         if mob_name_cv is None or mob_height_offset is None:
             return []
 
@@ -153,11 +160,12 @@ class Bot:
             template=mob_name_cv,
             threshold=self.config["mob_pos_match_threshold"],
             box_offset=(0, mob_height_offset),
-            frame_to_draw=self.debug_frame,
+            frame_to_draw=self.debug_frame if debug else None,
             draw_rect=self.config["show_mobs_pos_boxes"],
             draw_marker=self.config["show_mobs_pos_markers"],
         )
-        self.debug_frame = drawn_frame
+        if debug:
+            self.debug_frame = drawn_frame
         return matches
 
     def __check_mob_still_alive(self, mob_type_cv):
