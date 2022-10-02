@@ -29,7 +29,7 @@ class ComputerVision:
 
         :param frame: Frame to search in.
         :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
-            Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0).
+            Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0) with will not cut anything.
         :param template: Template to search for. Default is None, but it's required.
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
         :param threshold: Threshold to use for matching. Default is 0.7.
@@ -37,8 +37,14 @@ class ComputerVision:
 
         :return: max_val, max_loc, center_loc, passed_threshold, drawn_frame
         """
-        # Cut frame if needed
-        frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
+        # Cut frame if needed (row_start:row_end, col_start:col_end)
+        if frame_cut_area != (0, 0, 0, 0):
+            # row_end or col_end is 0, we translate it to the frame size
+            if frame_cut_area[1] == 0:
+                frame_cut_area = (frame_cut_area[0], frame.shape[0], frame_cut_area[2], frame_cut_area[3])
+            if frame_cut_area[3] == 0:
+                frame_cut_area = (frame_cut_area[0], frame_cut_area[1], frame_cut_area[2], frame.shape[1])
+            frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
 
         template_h = template.shape[0]
         template_w = template.shape[1]
@@ -75,7 +81,7 @@ class ComputerVision:
 
         :param frame: Frame to search in.
         :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
-            Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0).
+            Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0) which will not cut anything.
         :param template: Template to search for. Default is None, but it's required.
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
         :param threshold: Threshold to use for matching. Default is 0.7.
@@ -86,9 +92,15 @@ class ComputerVision:
 
         :return: matches, drawn_frame
         """
-        # Cut frame if needed
-        frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
-        
+        # Cut frame if needed (row_start:row_end, col_start:col_end)
+        if frame_cut_area != (0, 0, 0, 0):
+            # row_end or col_end is 0, we translate it to the frame size
+            if frame_cut_area[1] == 0:
+                frame_cut_area = (frame_cut_area[0], frame.shape[0], frame_cut_area[2], frame_cut_area[3])
+            if frame_cut_area[3] == 0:
+                frame_cut_area = (frame_cut_area[0], frame_cut_area[1], frame_cut_area[2], frame.shape[1])
+            frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
+
         template_h = template.shape[0]
         template_w = template.shape[1]
         result = cv.matchTemplate(frame, template, method)
