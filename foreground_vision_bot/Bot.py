@@ -48,7 +48,7 @@ class Bot:
         self.mouse = HumanMouse()
         self.keyboard = HumanKeyboard(window_handler)
         self.all_mobs = MobInfo.get_all_mobs()
-        Thread(target=self.__get_frame_thread, args=(gui_window,), daemon=True).start()
+        Thread(target=self.__frame_thread, args=(gui_window,), daemon=True).start()
 
     def start(self, gui_window):
         self.__farm_thread_running = True
@@ -94,6 +94,22 @@ class Bot:
     def __update_timer_configs(self):
         self.convert_penya_to_perins_timer.wait_seconds = self.config["convert_penya_to_perins_timer_min"] * 60
 
+    def __frame_thread(self, gui_window):
+        current_mob_info_index = 0
+        while True:
+            self.debug_frame, self.frame = self.window_capture.get_screenshot()
+
+            if current_mob_info_index >= (len(self.all_mobs) - 1):
+                current_mob_info_index = 0
+            self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
+
+            matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset, debug=True)
+
+            if not matches:
+                current_mob_info_index += 1
+
+            gui_window.write_event_value("debug_frame", self.debug_frame)
+
     @measure_perf
     def __farm_thread(self, gui_window):
         start_countdown(self.voice_engine, 3)
@@ -133,84 +149,6 @@ class Bot:
             if not self.__farm_thread_running:
                 break
 
-    def __get_frame_thread(self, gui_window):
-        current_mob_info_index = 0
-        while True:
-            self.debug_frame, self.frame = self.window_capture.get_screenshot()
-
-            if current_mob_info_index >= (len(self.all_mobs) - 1):
-                current_mob_info_index = 0
-            self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
-
-            matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset, debug=True)
-
-            if not matches:
-                current_mob_info_index += 1
-
-            gui_window.write_event_value("debug_frame", self.debug_frame)
-
-    def __get_mobs_position(self, mob_name_cv, mob_height_offset, debug=False):
-        if mob_name_cv is None or mob_height_offset is None:
-            return []
-
-        # frame_cute_area 50px from each side of the frame to avoid some UI elements
-        matches, drawn_frame = CV.match_template_multi(
-            frame=self.frame,
-            frame_cut_area=(50, -50, 50, -50),
-            template=mob_name_cv,
-            threshold=self.config["mob_pos_match_threshold"],
-            box_offset=(0, mob_height_offset),
-            frame_to_draw=self.debug_frame if debug else None,
-            draw_rect=self.config["show_mobs_pos_boxes"],
-            draw_marker=self.config["show_mobs_pos_markers"],
-        )
-        if debug:
-            self.debug_frame = drawn_frame
-        return matches
-
-    def __check_mob_still_alive(self, mob_type_cv):
-        """
-        Check if the mob is still alive by checking if the mob type icon is still visible.
-        """
-        # frame_cute_area get the top of the screen to see if the mob type icon is still visible
-        max_val, _, _, passed_threshold, drawn_frame = CV.match_template(
-            frame=self.frame,
-            frame_cut_area=(0, 50, 200, -200),
-            template=mob_type_cv,
-            threshold=self.config["mob_still_alive_match_threshold"],
-            frame_to_draw=self.debug_frame,
-        )
-        self.debug_frame = drawn_frame
-
-        if passed_threshold:
-            print(f"Mob still alive. mob_still_alive_match_threshold: {max_val}")
-            return True
-        else:
-            print(f"No mob selected. mob_still_alive_match_threshold: {max_val}")
-            return False
-
-    def __check_mob_existence(self):
-        """
-        Check if the mob exists by checking if the mob life bar exists.
-        """
-
-        # frame_cute_area get the top of the screen to see if the mob life bar exists
-        max_val, _, _, passed_threshold, drawn_frame = CV.match_template(
-            frame=self.frame,
-            frame_cut_area=(0, 50, 200, -200),
-            template=GeneralAssets.MOB_LIFE_BAR,
-            threshold=self.config["mob_existence_match_threshold"],
-            frame_to_draw=self.debug_frame,
-        )
-        self.debug_frame = drawn_frame
-
-        if passed_threshold:
-            print(f"Mob found! mob_existence_match_threshold: {max_val}")
-            return True
-        else:
-            print(f"No mob found! mob_existence_match_threshold: {max_val}")
-            return False
-
     def __mobs_available_on_screen(self, mob_type_cv, points, mobs_killed):
         frame_w = self.frame.shape[1]
         frame_h = self.frame.shape[0]
@@ -243,40 +181,6 @@ class Bot:
         self.keyboard.hold_key(VKEY["w"], press_time=4)
         sleep(0.1)
         self.keyboard.press_key(VKEY["s"])
-
-    def __check_if_inventory_is_open(self):
-        """
-        Check if inventory is open looking if the icons of the inventory is available on the screen
-        """
-        max_val, _, _, passed_threshold, drawn_frame = self.match_template(
-            frame=self.frame, template=GeneralAssets.INVENTORY_ICONS, threshold=self.config["inventory_icons_match_threshold"], frame_to_draw=self.debug_frame
-        )
-        self.debug_frame = drawn_frame
-        if passed_threshold:
-            print(f"Inventory is open! inventory_icons_match_threshold: {max_val}")
-            return True
-        print(f"Inventory is closed! inventory_icons_match_threshold: {max_val}")
-        return False
-
-    def __get_perin_converter_pos_if_available(self):
-        """
-        Get position of perin converter button in inventory, if available, otherwise return None
-        """
-
-        # frame_cute_area 300px from top, because the inventory is big
-        max_val, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
-            frame=self.frame,
-            frame_cut_area=(300, 0, 0, 0),
-            template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
-            threshold=self.config["inventory_perin_converter_match_threshold"],
-            frame_to_draw=self.debug_frame,
-        )
-        self.debug_frame = drawn_frame
-
-        if passed_threshold:
-            print(f"Perin converter found! inventory_perin_converter_match_threshold: {max_val}")
-            return center_loc
-        print(f"Perin converter not found! inventory_perin_converter_match_threshold: {max_val}")
 
     def __convert_penya_to_perins(self):
         # Open the inventory
@@ -318,3 +222,111 @@ class Bot:
         # Close the inventory
         self.keyboard.press_key(VKEY["i"])
         return True
+
+    """Match Methods"""
+    def __get_mobs_position(self, mob_name_cv, mob_height_offset, debug=False):
+        if mob_name_cv is None or mob_height_offset is None:
+            return []
+
+        # frame_cute_area 50px from each side of the frame to avoid some UI elements
+        matches, drawn_frame = CV.match_template_multi(
+            frame=self.frame,
+            frame_cut_area=(50, -50, 50, -50),
+            template=mob_name_cv,
+            threshold=self.config["mob_pos_match_threshold"],
+            box_offset=(0, mob_height_offset),
+            frame_to_draw=self.debug_frame if debug else None,
+            draw_rect=self.config["show_mobs_pos_boxes"],
+            draw_marker=self.config["show_mobs_pos_markers"],
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+        return matches
+
+    def __check_mob_still_alive(self, mob_type_cv, debug=False):
+        """
+        Check if the mob is still alive by checking if the mob type icon is still visible.
+        We can't use mob life bar because it changes when the mob is hit.
+        """
+        # frame_cute_area get the top of the screen to see if the mob type icon is still visible
+        max_val, _, _, passed_threshold, drawn_frame = CV.match_template(
+            frame=self.frame,
+            frame_cut_area=(0, 50, 200, -200),
+            template=mob_type_cv,
+            threshold=self.config["mob_still_alive_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            print(f"Mob still alive. mob_still_alive_match_threshold: {max_val}")
+            return True
+        else:
+            print(f"No mob selected. mob_still_alive_match_threshold: {max_val}")
+            return False
+
+    def __check_mob_existence(self, debug=False):
+        """
+        Check if the mob exists by checking if the mob life bar exists.
+        It's better to use mob life bar than mob type icon because mob life bar is bigger,
+        so it's faster to match.
+        """
+
+        # frame_cute_area get the top of the screen to see if the mob life bar exists
+        max_val, _, _, passed_threshold, drawn_frame = CV.match_template(
+            frame=self.frame,
+            frame_cut_area=(0, 50, 200, -200),
+            template=GeneralAssets.MOB_LIFE_BAR,
+            threshold=self.config["mob_existence_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            print(f"Mob found! mob_existence_match_threshold: {max_val}")
+            return True
+        else:
+            print(f"No mob found! mob_existence_match_threshold: {max_val}")
+            return False
+
+    def __check_if_inventory_is_open(self, debug=False):
+        """
+        Check if inventory is open looking if the icons of the inventory is available on the screen.
+        """
+        max_val, _, _, passed_threshold, drawn_frame = self.match_template(
+            frame=self.frame,
+            template=GeneralAssets.INVENTORY_ICONS,
+            threshold=self.config["inventory_icons_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            print(f"Inventory is open! inventory_icons_match_threshold: {max_val}")
+            return True
+        print(f"Inventory is closed! inventory_icons_match_threshold: {max_val}")
+        return False
+
+    def __get_perin_converter_pos_if_available(self, debug=False):
+        """
+        Get position of perin converter button in inventory, if available, otherwise return None
+        """
+
+        # frame_cute_area 300px from top, because the inventory is big
+        max_val, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
+            frame=self.frame,
+            frame_cut_area=(300, 0, 0, 0),
+            template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
+            threshold=self.config["inventory_perin_converter_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            print(f"Perin converter found! inventory_perin_converter_match_threshold: {max_val}")
+            return center_loc
+        print(f"Perin converter not found! inventory_perin_converter_match_threshold: {max_val}")
