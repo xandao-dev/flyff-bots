@@ -1,5 +1,6 @@
 from time import sleep, time
 from threading import Thread
+import collections
 import pyttsx3
 
 from assets.Assets import GeneralAssets, MobInfo
@@ -102,6 +103,7 @@ class Bot:
 
     def __frame_thread(self, gui_window):
         current_mob_info_index = 0
+        fps_circular_buffer = collections.deque(maxlen=10)
         loop_time = time()
         while True:
             try:
@@ -124,15 +126,17 @@ class Bot:
             if not matches:
                 current_mob_info_index += 1
 
+            fps_circular_buffer.append(time() - loop_time)
+            fps = round(1 / (sum(fps_circular_buffer) / len(fps_circular_buffer)))
+
             gui_window.write_event_value("debug_frame", self.debug_frame)
-            gui_window.write_event_value("video_fps", f"Video FPS: {round(1 / (time() - loop_time))}")
+            gui_window.write_event_value("video_fps", f"Video FPS: {fps}")
             loop_time = time()
 
     def __farm_thread(self, gui_window):
         start_countdown(self.voice_engine, 3)
         current_mob_info_index = 0
         mobs_killed = 0
-        loop_time = time()
 
         while True:
             self.convert_penya_to_perins_timer()
@@ -158,8 +162,7 @@ class Bot:
             if self.config["show_frames"]:
                 gui_window.write_event_value("debug_frame", self.debug_frame)
 
-            gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
-            loop_time = time()
+            # gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
 
             if not self.__farm_thread_running:
                 break

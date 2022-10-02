@@ -39,7 +39,7 @@ class throttle(object):
     Decorator that prevents a function from being called more than once every
     time period.
     To create a function that cannot be called more than once every 60 seconds:
-        @throttle
+        @throttle()
         def my_fun(_throttle_sec=60, *args, **kwargs):
             pass
     """
