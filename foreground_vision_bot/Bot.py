@@ -3,13 +3,19 @@ from threading import Thread
 import pyttsx3
 
 from assets.Assets import GeneralAssets, MobInfo
-from utils.decorators import measure_perf
+from utils.decorators import throttle
 from utils.helpers import start_countdown, get_point_near_center
 from utils.SyncedTimer import SyncedTimer
 from libs.human_mouse.HumanMouse import HumanMouse
 from libs.HumanKeyboard import VKEY, HumanKeyboard
 from libs.WindowCapture import WindowCapture
 from libs.ComputerVision import ComputerVision as CV
+
+
+
+@throttle()
+def emit_error(gui_window, msg):
+    gui_window.write_event_value("msg_red", msg)
 
 
 class Bot:
@@ -96,8 +102,14 @@ class Bot:
 
     def __frame_thread(self, gui_window):
         current_mob_info_index = 0
+        loop_time = time()
         while True:
-            self.debug_frame, self.frame = self.window_capture.get_screenshot()
+            try:
+                self.debug_frame, self.frame = self.window_capture.get_screenshot()
+            except:
+                emit_error(_throttle_sec=15, gui_window=gui_window, msg="Error getting the frame. Check if window is visible and attach again.")
+                sleep(3)
+                continue
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
                 current_mob_info_index = 0
@@ -113,6 +125,8 @@ class Bot:
                 current_mob_info_index += 1
 
             gui_window.write_event_value("debug_frame", self.debug_frame)
+            gui_window.write_event_value("video_fps", f"Video FPS: {round(1 / (time() - loop_time))}")
+            loop_time = time()
 
     def __farm_thread(self, gui_window):
         start_countdown(self.voice_engine, 3)
@@ -144,7 +158,6 @@ class Bot:
             if self.config["show_frames"]:
                 gui_window.write_event_value("debug_frame", self.debug_frame)
 
-            gui_window.write_event_value("msg_purple", f"Video FPS: {round(1 / (time() - loop_time))}")
             gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
             loop_time = time()
 
@@ -318,7 +331,7 @@ class Bot:
         """
 
         # frame_cute_area 300px from top, because the inventory is big
-        max_val, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
+        _, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             frame_cut_area=(300, 0, 0, 0),
             template=GeneralAssets.INVENTORY_PERIN_CONVERTER,

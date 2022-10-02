@@ -107,8 +107,11 @@ class Gui:
                     self.window["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"].update("30")
                     bot.set_config(convert_penya_to_perins_timer_min=30)
 
+            # STATUS - Text events
             if event in self.logger_events:
                 sg.cprint(values[event], c=self.logger_events_color[event])
+            if event == "video_fps":
+                self.window["-VIDEO_FPS-"].update(values["video_fps"])
 
             if event == "-ATTACH_WINDOW-":
                 window_handler = self.__attach_window_popup()
@@ -261,7 +264,7 @@ class Gui:
                     sg.Frame(
                         "Status:",
                         [
-                            [sg.Text("", size=(15, 1), key="-OUTPUT-")],
+                            [sg.Text("Video FPS:", size=(15, 1), key="-VIDEO_FPS-")],
                             [sg.Multiline(size=(30, 10), key="-ML-", autoscroll=True)],
                         ],
                     )
