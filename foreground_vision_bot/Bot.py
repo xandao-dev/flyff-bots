@@ -25,6 +25,7 @@ class Bot:
             "show_frames": False,
             "show_mobs_pos_boxes": False,
             "show_mobs_pos_markers": False,
+            "show_matches_text": False,
             "mob_pos_match_threshold": 0.7,
             "mob_still_alive_match_threshold": 0.7,
             "mob_existence_match_threshold": 0.7,
@@ -74,6 +75,8 @@ class Bot:
                 Show the boxes of the mobs positions. Default: False
             show_mobs_pos_markers: bool
                 Show the markers of the mobs positions. Default: False
+            show_matches_text: bool
+                Show text next to the matches. Default: False
             mob_pos_match_threshold: float
                 The threshold to match the mobs positions. From 0 to 1. Default: 0.7
             mob_still_alive_match_threshold: float
@@ -258,6 +261,7 @@ class Bot:
             frame_to_draw=self.debug_frame if debug else None,
             draw_rect=self.config["show_mobs_pos_boxes"],
             draw_marker=self.config["show_mobs_pos_markers"],
+            draw_text=self.config["show_matches_text"],
         )
         if debug:
             self.debug_frame = drawn_frame
@@ -277,6 +281,7 @@ class Bot:
             template=mob_type_cv,
             threshold=self.config["mob_still_alive_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="Mob still alive" if debug and self.config["show_matches_text"] else None,
         )
         if debug:
             self.debug_frame = drawn_frame
@@ -301,6 +306,7 @@ class Bot:
             template=GeneralAssets.MOB_LIFE_BAR,
             threshold=self.config["mob_existence_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="Mob exists" if debug and self.config["show_matches_text"] else None,
         )
         if debug:
             self.debug_frame = drawn_frame
@@ -320,6 +326,7 @@ class Bot:
             template=GeneralAssets.INVENTORY_ICONS,
             threshold=self.config["inventory_icons_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="Inv. open" if debug and self.config["show_matches_text"] else None,
         )
         if debug:
             self.debug_frame = drawn_frame
@@ -342,6 +349,7 @@ class Bot:
             template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
             threshold=self.config["inventory_perin_converter_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="P. converter" if debug and self.config["show_matches_text"] else None,
         )
         if debug:
             self.debug_frame = drawn_frame

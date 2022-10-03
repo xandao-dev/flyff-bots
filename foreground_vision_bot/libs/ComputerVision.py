@@ -23,6 +23,7 @@ class ComputerVision:
         method=MATCH_METHODS["TM_CCOEFF_NORMED"],
         threshold=0.7,
         frame_to_draw=None,
+        text_to_draw=None,
     ):
         """
         Match template in a frame.
@@ -34,6 +35,7 @@ class ComputerVision:
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
         :param threshold: Threshold to use for matching. Default is 0.7.
         :param frame_to_draw: Frame to draw on. Default is None, which will not draw.
+        :param text_to_draw: Draw text with the match value. Default: None, which will not draw.
 
         :return: max_val, max_loc, center_loc, passed_threshold, drawn_frame
         """
@@ -61,6 +63,27 @@ class ComputerVision:
             bottom_right = (top_left[0] + template_w, top_left[1] + template_h)
             cv.rectangle(frame_to_draw, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
 
+            if text_to_draw:
+                font_face = cv.FONT_HERSHEY_DUPLEX
+                font_scale = 0.35
+                font_color = (0, 0, 0)
+                font_thickness = 1
+                (text_w, text_h), _ = cv.getTextSize(text_to_draw, font_face, font_scale, font_thickness)
+                text_offset_x = (template_w - text_w) // 2
+                text_offset_y = text_h + 5 # 5px for some space between the text and the box
+                text_pos = (max_loc[0] + frame_cut_area[2] + text_offset_x, max_loc[1] + template_h + frame_cut_area[0] + text_offset_y)
+                text_bg_color = (255, 255, 255)
+                cv.rectangle(frame_to_draw, text_pos, (text_pos[0] + text_w, text_pos[1] - text_h), text_bg_color, -1)
+                cv.putText(
+                    frame_to_draw,
+                    text_to_draw,
+                    text_pos,
+                    font_face,
+                    font_scale,
+                    font_color,
+                    font_thickness,
+                )
+
         drawn_frame = frame_to_draw
         return max_val, max_loc_corrected, center_loc, passed_threshold, drawn_frame
 
@@ -75,6 +98,7 @@ class ComputerVision:
         frame_to_draw=None,
         draw_rect=True,
         draw_marker=False,
+        draw_text=False,
     ):
         """
         Match template, multiple times, in image. Return only the matches that pass the threshold.
@@ -89,6 +113,7 @@ class ComputerVision:
         :param frame_to_draw: Frame to draw on. Default is None, which will not draw.
         :param draw_rect: Draw rectangle around the match. Default: True.
         :param draw_marker: Draw marker at the center of the match. Default: False.
+        :param draw_text: Draw text with the match value. Default: False.
 
         :return: matches, drawn_frame
         """
@@ -150,7 +175,7 @@ class ComputerVision:
                         frame_to_draw, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2
                     )
                 if draw_marker:
-                    marker_color = (255, 0, 255)
+                    marker_color = (0, 0, 200)
                     marker_type = cv.MARKER_CROSS
                     cv.drawMarker(
                         frame_to_draw,
@@ -160,8 +185,25 @@ class ComputerVision:
                         markerSize=40,
                         thickness=2,
                     )
-                    # cv.putText(frame_to_draw, f'({center_x}, {center_y})', (x+w, y+h),
-                    # cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                if draw_text:
+                    text = f"({center_x}, {center_y})"
+                    font_face = cv.FONT_HERSHEY_DUPLEX
+                    font_scale = 0.35
+                    font_color = (0, 0, 0)
+                    font_thickness = 1
+                    (text_w, text_h), _ = cv.getTextSize(text, font_face, font_scale, font_thickness)
+                    text_offset_x = (w - text_w) // 2
+                    text_offset_y = text_h + 5 if draw_rect else -h + text_h + 10
+                    text_pos = (x + frame_cut_area[2] + text_offset_x, y + h + frame_cut_area[0] + text_offset_y)
+                    cv.putText(
+                        frame_to_draw,
+                        text,
+                        text_pos,
+                        font_face,
+                        font_scale,
+                        font_color,
+                        font_thickness,
+                    )
 
         drawn_frame = frame_to_draw
         return matches, drawn_frame

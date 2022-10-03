@@ -55,12 +55,15 @@ class Gui:
                 bot.set_config(show_frames=values["-SHOW_FRAMES-"])
                 self.window["-SHOW_BOXES-"].update(disabled=(not values["-SHOW_FRAMES-"]))
                 self.window["-SHOW_MARKERS-"].update(disabled=(not values["-SHOW_FRAMES-"]))
+                self.window["-SHOW_MATCHES_TEXT-"].update(disabled=(not values["-SHOW_FRAMES-"]))
                 if not values["-SHOW_FRAMES-"]:
                     self.window["-DEBUG_IMAGE-"].update(data=None)
             if event == "-SHOW_BOXES-":
                 bot.set_config(show_mobs_pos_boxes=values["-SHOW_BOXES-"])
             if event == "-SHOW_MARKERS-":
                 bot.set_config(show_mobs_pos_markers=values["-SHOW_MARKERS-"])
+            if event == "-SHOW_MATCHES_TEXT-":
+                bot.set_config(show_matches_text=values["-SHOW_MATCHES_TEXT-"])
             if event == "-MOB_POS_MATCH_THRESHOLD-":
                 bot.set_config(mob_pos_match_threshold=values["-MOB_POS_MATCH_THRESHOLD-"])
             if event == "-MOB_STILL_ALIVE_MATCH_THRESHOLD-":
@@ -179,6 +182,11 @@ class Gui:
                             [
                                 sg.Checkbox(
                                     "Show mobs markers", False, disabled=True, enable_events=True, key="-SHOW_MARKERS-"
+                                )
+                            ],
+                            [
+                                sg.Checkbox(
+                                    "Show matches text", False, disabled=True, enable_events=True, key="-SHOW_MATCHES_TEXT-"
                                 )
                             ],
                             [sg.Text("Mob position Match Threshold:")],
