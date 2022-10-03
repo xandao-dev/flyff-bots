@@ -113,18 +113,20 @@ class Bot:
                 sleep(3)
                 continue
 
-            if current_mob_info_index >= (len(self.all_mobs) - 1):
-                current_mob_info_index = 0
-            self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
+            
+            if self.config["show_frames"]:
+                if current_mob_info_index >= (len(self.all_mobs) - 1):
+                    current_mob_info_index = 0
+                self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
 
-            matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset, debug=True)
-            self.__check_mob_existence(debug=True)
-            self.__check_mob_still_alive(self.current_mob_type, debug=True)
-            self.__check_inventory_open(debug=True)
-            self.__get_perin_converter_pos_if_available(debug=True)
+                matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset, debug=True)
+                self.__check_mob_existence(debug=True)
+                self.__check_mob_still_alive(self.current_mob_type, debug=True)
+                self.__check_inventory_open(debug=True)
+                self.__get_perin_converter_pos_if_available(debug=True)
 
-            if not matches:
-                current_mob_info_index += 1
+                if not matches:
+                    current_mob_info_index += 1
 
             fps_circular_buffer.append(time() - loop_time)
             fps = round(1 / (sum(fps_circular_buffer) / len(fps_circular_buffer)))

@@ -175,10 +175,10 @@ class Gui:
                         "Options:",
                         [
                             [sg.Checkbox("Show bot's vision", False, enable_events=True, key="-SHOW_FRAMES-")],
-                            [sg.Checkbox("Show boxes", False, disabled=True, enable_events=True, key="-SHOW_BOXES-")],
+                            [sg.Checkbox("Show mobs boxes", False, disabled=True, enable_events=True, key="-SHOW_BOXES-")],
                             [
                                 sg.Checkbox(
-                                    "Show markers", False, disabled=True, enable_events=True, key="-SHOW_MARKERS-"
+                                    "Show mobs markers", False, disabled=True, enable_events=True, key="-SHOW_MARKERS-"
                                 )
                             ],
                             [sg.Text("Mob position Match Threshold:")],
