@@ -39,7 +39,7 @@ class Gui:
 
     def init(self):
         layout = self.__get_layout()
-        self.window = sg.Window("Flyff FVF", layout, location=(800, 400), resizable=True, finalize=True)
+        self.window = sg.Window("Flyff FVF", layout, location=(0, 0), resizable=True, finalize=True)
         sg.cprint_set_output_destination(self.window, "-ML-")
         self.__set_hotkeys()
         return self.window
@@ -55,12 +55,15 @@ class Gui:
                 bot.set_config(show_frames=values["-SHOW_FRAMES-"])
                 self.window["-SHOW_BOXES-"].update(disabled=(not values["-SHOW_FRAMES-"]))
                 self.window["-SHOW_MARKERS-"].update(disabled=(not values["-SHOW_FRAMES-"]))
+                self.window["-SHOW_MATCHES_TEXT-"].update(disabled=(not values["-SHOW_FRAMES-"]))
                 if not values["-SHOW_FRAMES-"]:
                     self.window["-DEBUG_IMAGE-"].update(data=None)
             if event == "-SHOW_BOXES-":
                 bot.set_config(show_mobs_pos_boxes=values["-SHOW_BOXES-"])
             if event == "-SHOW_MARKERS-":
                 bot.set_config(show_mobs_pos_markers=values["-SHOW_MARKERS-"])
+            if event == "-SHOW_MATCHES_TEXT-":
+                bot.set_config(show_matches_text=values["-SHOW_MATCHES_TEXT-"])
             if event == "-MOB_POS_MATCH_THRESHOLD-":
                 bot.set_config(mob_pos_match_threshold=values["-MOB_POS_MATCH_THRESHOLD-"])
             if event == "-MOB_STILL_ALIVE_MATCH_THRESHOLD-":
@@ -107,14 +110,17 @@ class Gui:
                     self.window["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"].update("30")
                     bot.set_config(convert_penya_to_perins_timer_min=30)
 
+            # STATUS - Text events
             if event in self.logger_events:
                 sg.cprint(values[event], c=self.logger_events_color[event])
+            if event == "video_fps":
+                self.window["-VIDEO_FPS-"].update(values["video_fps"])
 
             if event == "-ATTACH_WINDOW-":
                 window_handler = self.__attach_window_popup()
                 if window_handler:
                     bot.stop()
-                    bot.setup(window_handler)
+                    bot.setup(window_handler, self.window)
                     self.window["-START_BOT-"].update(disabled=False)
                     self.window["-STOP_BOT-"].update(disabled=True)
             if event == "-START_BOT-":
@@ -127,7 +133,7 @@ class Gui:
                 self.window["-STOP_BOT-"].update(disabled=True)
 
             if values["-SHOW_FRAMES-"]:
-                img = values.get("image_mobs_position", None)
+                img = values.get("debug_frame", None)
                 if img is not None:
                     resolution = values["-DEBUG_IMG_WIDTH-"]
                     w, h = self.frame_resolutions[resolution] 
@@ -172,10 +178,15 @@ class Gui:
                         "Options:",
                         [
                             [sg.Checkbox("Show bot's vision", False, enable_events=True, key="-SHOW_FRAMES-")],
-                            [sg.Checkbox("Show boxes", False, disabled=True, enable_events=True, key="-SHOW_BOXES-")],
+                            [sg.Checkbox("Show mobs boxes", False, disabled=True, enable_events=True, key="-SHOW_BOXES-")],
                             [
                                 sg.Checkbox(
-                                    "Show markers", False, disabled=True, enable_events=True, key="-SHOW_MARKERS-"
+                                    "Show mobs markers", False, disabled=True, enable_events=True, key="-SHOW_MARKERS-"
+                                )
+                            ],
+                            [
+                                sg.Checkbox(
+                                    "Show matches text", False, disabled=True, enable_events=True, key="-SHOW_MATCHES_TEXT-"
                                 )
                             ],
                             [sg.Text("Mob position Match Threshold:")],
@@ -261,7 +272,7 @@ class Gui:
                     sg.Frame(
                         "Status:",
                         [
-                            [sg.Text("", size=(15, 1), key="-OUTPUT-")],
+                            [sg.Text("Video FPS:", size=(15, 1), key="-VIDEO_FPS-")],
                             [sg.Multiline(size=(30, 10), key="-ML-", autoscroll=True)],
                         ],
                     )

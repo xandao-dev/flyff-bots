@@ -1,18 +1,22 @@
 from time import sleep, time
 from threading import Thread
-
-import cv2 as cv
-import numpy as np
+import collections
 import pyttsx3
 
 from assets.Assets import GeneralAssets, MobInfo
-from utils.decorators import measure_perf
+from utils.decorators import throttle
 from utils.helpers import start_countdown, get_point_near_center
 from utils.SyncedTimer import SyncedTimer
 from libs.human_mouse.HumanMouse import HumanMouse
 from libs.HumanKeyboard import VKEY, HumanKeyboard
 from libs.WindowCapture import WindowCapture
+from libs.ComputerVision import ComputerVision as CV
 
+
+
+@throttle()
+def emit_error(gui_window, msg):
+    gui_window.write_event_value("msg_red", msg)
 
 
 class Bot:
@@ -21,6 +25,7 @@ class Bot:
             "show_frames": False,
             "show_mobs_pos_boxes": False,
             "show_mobs_pos_markers": False,
+            "show_matches_text": False,
             "mob_pos_match_threshold": 0.7,
             "mob_still_alive_match_threshold": 0.7,
             "mob_existence_match_threshold": 0.7,
@@ -32,18 +37,26 @@ class Bot:
             "convert_penya_to_perins_timer_min": 30,
         }
 
-        # Debug Variables
-        self.image_mobs_position = None
+        self.frame = None
+        self.debug_frame = None
+        self.__farm_thread_running = False
+
+        self.current_mob = None
+        self.current_mob_type = None
+        self.current_mob_offset = None
 
         # Synced Timers
-        self.convert_penya_to_perins_timer = SyncedTimer(self.__convert_penya_to_perins, self.config["convert_penya_to_perins_timer_min"] * 60)
+        self.convert_penya_to_perins_timer = SyncedTimer(
+            self.__convert_penya_to_perins, self.config["convert_penya_to_perins_timer_min"] * 60
+        )
 
-    def setup(self, window_handler):
+    def setup(self, window_handler, gui_window):
         self.voice_engine = pyttsx3.init()
         self.window_capture = WindowCapture(window_handler)
         self.mouse = HumanMouse()
         self.keyboard = HumanKeyboard(window_handler)
         self.all_mobs = MobInfo.get_all_mobs()
+        Thread(target=self.__frame_thread, args=(gui_window,), daemon=True).start()
 
     def start(self, gui_window):
         self.__farm_thread_running = True
@@ -62,6 +75,8 @@ class Bot:
                 Show the boxes of the mobs positions. Default: False
             show_mobs_pos_markers: bool
                 Show the markers of the mobs positions. Default: False
+            show_matches_text: bool
+                Show text next to the matches. Default: False
             mob_pos_match_threshold: float
                 The threshold to match the mobs positions. From 0 to 1. Default: 0.7
             mob_still_alive_match_threshold: float
@@ -89,27 +104,55 @@ class Bot:
     def __update_timer_configs(self):
         self.convert_penya_to_perins_timer.wait_seconds = self.config["convert_penya_to_perins_timer_min"] * 60
 
-    @measure_perf
+    def __frame_thread(self, gui_window):
+        current_mob_info_index = 0
+        fps_circular_buffer = collections.deque(maxlen=10)
+        loop_time = time()
+        while True:
+            try:
+                self.debug_frame, self.frame = self.window_capture.get_screenshot()
+            except:
+                emit_error(_throttle_sec=15, gui_window=gui_window, msg="Error getting the frame. Check if window is visible and attach again.")
+                sleep(3)
+                continue
+
+            
+            if self.config["show_frames"]:
+                if current_mob_info_index >= (len(self.all_mobs) - 1):
+                    current_mob_info_index = 0
+                self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
+
+                matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset, debug=True)
+                self.__check_mob_existence(debug=True)
+                self.__check_mob_still_alive(self.current_mob_type, debug=True)
+                self.__check_inventory_open(debug=True)
+                self.__get_perin_converter_pos_if_available(debug=True)
+
+                if not matches:
+                    current_mob_info_index += 1
+
+            fps_circular_buffer.append(time() - loop_time)
+            fps = round(1 / (sum(fps_circular_buffer) / len(fps_circular_buffer)))
+
+            gui_window.write_event_value("debug_frame", self.debug_frame)
+            gui_window.write_event_value("video_fps", f"Video FPS: {fps}")
+            loop_time = time()
+
     def __farm_thread(self, gui_window):
         start_countdown(self.voice_engine, 3)
         current_mob_info_index = 0
         mobs_killed = 0
-        loop_time = time()
 
         while True:
-            screenshot = self.window_capture.get_screenshot()
-
-            self.convert_penya_to_perins_timer(GeneralAssets.INVENTORY_ICONS, GeneralAssets.INVENTORY_PERIN_CONVERTER)
+            self.convert_penya_to_perins_timer()
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
                 current_mob_info_index = 0
-            mob_name_cv, mob_type_cv, mob_height_offset = self.all_mobs[current_mob_info_index]
+            self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
+            matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset)
 
-            points = self.__get_mobs_position(mob_name_cv, screenshot, mob_height_offset)
-            # print("Mobs positions: ", points)
-
-            if points:
-                mobs_killed = self.__mobs_available_on_screen(screenshot, mob_type_cv, points, mobs_killed)
+            if matches:
+                mobs_killed = self.__mobs_available_on_screen(self.current_mob_type, matches, mobs_killed)
             else:
                 # TODO: Turn around and check for mobs first before changing the current mob
                 current_mob_info_index += 1
@@ -122,153 +165,23 @@ class Bot:
                 break
 
             if self.config["show_frames"]:
-                gui_window.write_event_value("image_mobs_position", self.image_mobs_position)
+                gui_window.write_event_value("debug_frame", self.debug_frame)
 
-            gui_window.write_event_value("msg_purple", f"Video FPS: {round(1 / (time() - loop_time))}")
-            gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
-            loop_time = time()
+            # gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
 
             if not self.__farm_thread_running:
                 break
 
-    def __get_mobs_position(self, mob_name_cv, screenshot, mob_height_offset):
-        # Save the dimensions of the needle image and the screenshot
-        needle_w = mob_name_cv.shape[1]
-        needle_h = mob_name_cv.shape[0]
-        scrshot_w = screenshot.shape[1]
-        scrshot_h = screenshot.shape[0]
-
-        # There are 6 methods to choose from:
-        # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
-        method = cv.TM_CCOEFF_NORMED
-        result = cv.matchTemplate(screenshot, mob_name_cv, method)
-
-        # Get the all the positions from the match result that exceed our threshold
-        locations = np.where(result >= self.config["mob_pos_match_threshold"])
-        locations = list(zip(*locations[::-1]))
-        # print(locations)
-
-        # You'll notice a lot of overlapping rectangles get drawn. We can eliminate those redundant
-        # locations by using groupRectangles().
-        # First we need to create the list of [x, y, w, h] rectangles
-        rectangles = []
-        for loc in locations:
-            rect = [int(loc[0]), int(loc[1]), needle_w, needle_h + mob_height_offset]
-            # Add every box to the list twice in order to retain single (non-overlapping) boxes
-            rectangles.append(rect)
-            rectangles.append(rect)
-        # Apply group rectangles.
-        # The groupThreshold parameter should usually be 1. If you put it at 0 then no grouping is
-        # done. If you put it at 2 then an object needs at least 3 overlapping rectangles to appear
-        # in the result. I've set eps to 0.5, which is:
-        # "Relative difference between sides of the rectangles to merge them into a group."
-        rectangles, weights = cv.groupRectangles(rectangles, groupThreshold=1, eps=0.5)
-        # print(rectangles)
-
-        points = []
-        if len(rectangles):
-            # print('Found needle.')
-            line_color = (0, 255, 0)
-            line_type = cv.LINE_4
-            marker_color = (255, 0, 255)
-            marker_type = cv.MARKER_CROSS
-
-            # Loop over all the rectangles
-            for (x, y, w, h) in rectangles:
-                # Determine the center position
-                center_x = x + int(w / 2)
-                center_y = y + int(h / 2)
-                # Save the points
-                points.append((center_x, center_y))
-
-                if self.config["show_mobs_pos_boxes"]:
-                    # Determine the box position
-                    top_left = (x, y)
-                    bottom_right = (x + w, y + h)
-                    # Draw the box
-                    cv.rectangle(screenshot, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
-                if self.config["show_mobs_pos_markers"]:
-                    # Draw the center point
-                    cv.drawMarker(
-                        screenshot,
-                        (center_x, center_y),
-                        color=marker_color,
-                        markerType=marker_type,
-                        markerSize=40,
-                        thickness=2,
-                    )
-                    # cv.putText(screenshot, f'({center_x}, {center_y})', (x+w, y+h),
-                    # 		   cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-                self.image_mobs_position = screenshot  # cv.resize(screenshot, (758, 426))
-
-        # Remove points in the skills bar on the bottom and the claim rewards button on the left side.
-        for point in points:
-            if point[0] <= 40 or point[1] >= needle_h - 55:
-                points.remove(point)
-
-        return points
-
-    def __check_mob_still_alive(self, mob_type_cv, debug=False):
-        # Take a new screenshot to verify the fight status
-        screenshot = self.window_capture.get_screenshot()
-
-        scrshot_w = screenshot.shape[1]
-        scrshot_h = screenshot.shape[0]
-
-        # Get the top of the screen to see if the mob life bar exists
-        top_image = screenshot[0 : 0 + 50, 200 : scrshot_w - 200]
-
-        if debug:
-            cv.imshow("Mob Still Alive [Type Check]?", top_image)
-            cv.waitKey(0)
-
-        # There are 6 methods to choose from:
-        # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
-        method = cv.TM_CCOEFF_NORMED
-        result_type_check = cv.matchTemplate(top_image, mob_type_cv, method)
-
-        # Get the best match position from the match result.
-        _, max_val_tc, _, _ = cv.minMaxLoc(result_type_check)
-
-        if max_val_tc >= self.config["mob_still_alive_match_threshold"]:
-            print("Mob still alive")
-            return True
-        else:
-            print("No mob selected")
-            return False
-
-    def __check_mob_existence(self, mob_life_bar, top_image, debug=False):
-        if debug:
-            cv.imshow("Mob Exists?", top_image)
-            cv.waitKey(0)
-
-        # There are 6 methods to choose from:
-        # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
-        method = cv.TM_CCOEFF_NORMED
-        result = cv.matchTemplate(top_image, mob_life_bar, method)
-
-        # Get the best match position from the match result.
-        min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
-        if max_val >= self.config["mob_existence_match_threshold"]:
-            print(f"Mob found! Best mob_existence_match_threshold matched value: {max_val}")
-            return True
-        print(f"No mob found! Best mob_existence_match_threshold matched value: {max_val}")
-        return False
-
-    def __mobs_available_on_screen(self, screenshot, mob_type_cv, points, mobs_killed):
-        scrshot_w = screenshot.shape[1]
-        scrshot_h = screenshot.shape[0]
-        scrshot_center = (round(scrshot_w / 2), round(scrshot_h / 2))
-
-        # Get the top of the screen
-        top_image = screenshot[0 : 0 + 50, 200 : scrshot_w - 200]
+    def __mobs_available_on_screen(self, mob_type_cv, points, mobs_killed):
+        frame_w = self.frame.shape[1]
+        frame_h = self.frame.shape[0]
+        frame_center = (frame_w // 2, frame_h // 2)
 
         monsters_count = mobs_killed
-        mob_pos = get_point_near_center(scrshot_center, points)
+        mob_pos = get_point_near_center(frame_center, points)
         mob_pos_converted = self.window_capture.get_screen_position(mob_pos)
         self.mouse.move(to_point=mob_pos_converted, duration=0.1)
-        # self.mouse.move_like_robot(mob_pos_converted)
-        if self.__check_mob_existence(GeneralAssets.MOB_LIFE_BAR, top_image):
+        if self.__check_mob_existence():
             self.mouse.left_click(mob_pos)
             self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
             self.mouse.move_outside_game()
@@ -289,90 +202,32 @@ class Bot:
         print("No Mobs in Area, moving.")
         self.keyboard.human_turn_back()
         self.keyboard.hold_key(VKEY["w"], press_time=4)
+        sleep(0.1)
+        self.keyboard.press_key(VKEY["s"])
 
-    def __check_if_inventory_is_open(self, frame, inventory_icons_cv):
-        """
-        Check if inventory is open looking if the icons of the inventory is available on the screen
-        """
-        needle_w = inventory_icons_cv.shape[0]
-        needle_h = inventory_icons_cv.shape[1]
-
-        # There are 6 methods to choose from:
-        # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
-        method = cv.TM_CCOEFF_NORMED
-        # Mask as the needle, to remove the black pixels
-        result = cv.matchTemplate(frame, inventory_icons_cv, method)
-        
-        # Get the best match position from the match result.
-        _, max_val, _, max_loc = cv.minMaxLoc(result)
-
-        if max_val < self.config["inventory_icons_match_threshold"]:
-            print(f"Inventory icons not found! Best inventory_icons_match_threshold matched value: {max_val}")
-            return False
-        print(f"Inventory icons found! Best inventory_icons_match_threshold matched value: {max_val}")
-
-        line_color = (0, 255, 0)
-        line_type = cv.LINE_4
-        top_left = (max_loc[0], max_loc[1])
-        bottom_right = (max_loc[0] + needle_w, max_loc[1] + needle_h)
-
-        cv.rectangle(frame, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
-        self.image_mobs_position = frame
-        return True
-
-    def __get_perin_converter_pos_if_available(self, frame, inventory_perin_converter_cv):
-            needle_w = inventory_perin_converter_cv.shape[0]
-            needle_h = inventory_perin_converter_cv.shape[1]
-
-            # There are 6 methods to choose from:
-            # TM_CCOEFF, TM_CCOEFF_NORMED, TM_CCORR, TM_CCORR_NORMED, TM_SQDIFF, TM_SQDIFF_NORMED
-            method = cv.TM_CCOEFF_NORMED
-            result = cv.matchTemplate(frame, inventory_perin_converter_cv, method)
-
-            # Get the best match position from the match result.
-            _, max_val, _, max_loc = cv.minMaxLoc(result)
-
-            if max_val < self.config["inventory_perin_converter_match_threshold"]:
-                print(f"Inventory Perin Converter not found! Best inventory_perin_converter_match_threshold matched value: {max_val}")
-                return None
-            print(f"Inventory Perin Converter found! Best inventory_perin_converter_match_threshold matched value: {max_val}")
-            line_color = (0, 255, 0)
-            line_type = cv.LINE_4
-            top_left = (max_loc[0], max_loc[1])
-            bottom_right = (max_loc[0] + needle_w, max_loc[1] + needle_h)
-
-            cv.rectangle(frame, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2)
-            self.image_mobs_position = frame
-
-            center_point = (round(max_loc[0] + needle_w / 2), round(max_loc[1] + needle_h / 2))
-            return center_point
-    
-    def __convert_penya_to_perins(self, inventory_icons_cv, inventory_perin_converter_cv):
+    def __convert_penya_to_perins(self):
         # Open the inventory
         self.keyboard.press_key(VKEY["i"])
         sleep(1)
-        frame = self.window_capture.get_screenshot()
-
         # Check if inventory is open
-        is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)
+        is_inventory_open = self.__check_inventory_open()
         if not is_inventory_open:
             # If not open, open it
             self.keyboard.press_key(VKEY["i"])
             sleep(1)
-            frame = self.window_capture.get_screenshot()
 
             # Check if inventory is open, after one failed attempt
-            is_inventory_open = self.__check_if_inventory_is_open(frame, inventory_icons_cv)
+            is_inventory_open = self.__check_inventory_open()
             if not is_inventory_open:
                 return False
 
         # Check if perin converter is available
-        center_point = self.__get_perin_converter_pos_if_available(frame, inventory_perin_converter_cv)
+        center_point = self.__get_perin_converter_pos_if_available()
         if center_point is None:
             # If not available, close the inventory and return
             self.keyboard.press_key(VKEY["i"])
             return False
-        
+
         # Move the mouse to the perin converter and click
         center_point_translated = self.window_capture.get_screen_position(center_point)
         self.mouse.move(to_point=center_point_translated, duration=0.2)
@@ -390,3 +245,116 @@ class Bot:
         # Close the inventory
         self.keyboard.press_key(VKEY["i"])
         return True
+
+    """Match Methods"""
+    def __get_mobs_position(self, mob_name_cv, mob_height_offset, debug=False):
+        if mob_name_cv is None or mob_height_offset is None:
+            return []
+
+        # frame_cute_area 50px from each side of the frame to avoid some UI elements
+        matches, drawn_frame = CV.match_template_multi(
+            frame=self.frame,
+            frame_cut_area=(50, -50, 50, -50),
+            template=mob_name_cv,
+            threshold=self.config["mob_pos_match_threshold"],
+            box_offset=(0, mob_height_offset),
+            frame_to_draw=self.debug_frame if debug else None,
+            draw_rect=self.config["show_mobs_pos_boxes"],
+            draw_marker=self.config["show_mobs_pos_markers"],
+            draw_text=self.config["show_matches_text"],
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        # print("Mobs positions: ", matches)
+        return matches
+
+    def __check_mob_still_alive(self, mob_type_cv, debug=False):
+        """
+        Check if the mob is still alive by checking if the mob type icon is still visible.
+        We can't use mob life bar because it changes when the mob is hit.
+        """
+        # frame_cute_area get the top of the screen to see if the mob type icon is still visible
+        _, _, _, passed_threshold, drawn_frame = CV.match_template(
+            frame=self.frame,
+            frame_cut_area=(0, 50, 200, -200),
+            template=mob_type_cv,
+            threshold=self.config["mob_still_alive_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="Mob still alive" if debug and self.config["show_matches_text"] else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            # print(f"Mob still alive. mob_still_alive_match_threshold: {max_val}")
+            return True
+        # print(f"No mob selected. mob_still_alive_match_threshold: {max_val}")
+        return False
+
+    def __check_mob_existence(self, debug=False):
+        """
+        Check if the mob exists by checking if the mob life bar exists.
+        It's better to use mob life bar than mob type icon because mob life bar is bigger,
+        so it's faster to match.
+        """
+
+        # frame_cute_area get the top of the screen to see if the mob life bar exists
+        _, _, _, passed_threshold, drawn_frame = CV.match_template(
+            frame=self.frame,
+            frame_cut_area=(0, 50, 200, -200),
+            template=GeneralAssets.MOB_LIFE_BAR,
+            threshold=self.config["mob_existence_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="Mob exists" if debug and self.config["show_matches_text"] else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            # print(f"Mob found! mob_existence_match_threshold: {max_val}")
+            return True
+        # print(f"No mob found! mob_existence_match_threshold: {max_val}")
+        return False
+
+    def __check_inventory_open(self, debug=False):
+        """
+        Check if inventory is open looking if the icons of the inventory is available on the screen.
+        """
+        _, _, _, passed_threshold, drawn_frame = CV.match_template(
+            frame=self.frame,
+            template=GeneralAssets.INVENTORY_ICONS,
+            threshold=self.config["inventory_icons_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="Inv. open" if debug and self.config["show_matches_text"] else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            # print(f"Inventory is open! inventory_icons_match_threshold: {max_val}")
+            return True
+        # print(f"Inventory is closed! inventory_icons_match_threshold: {max_val}")
+        return False
+
+    def __get_perin_converter_pos_if_available(self, debug=False):
+        """
+        Get position of perin converter button in inventory, if available, otherwise return None
+        """
+
+        # frame_cute_area 300px from top, because the inventory is big
+        _, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
+            frame=self.frame,
+            frame_cut_area=(300, 0, 0, 0),
+            template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
+            threshold=self.config["inventory_perin_converter_match_threshold"],
+            frame_to_draw=self.debug_frame if debug else None,
+            text_to_draw="P. converter" if debug and self.config["show_matches_text"] else None,
+        )
+        if debug:
+            self.debug_frame = drawn_frame
+
+        if passed_threshold:
+            #print(f"Perin converter found! inventory_perin_converter_match_threshold: {max_val}")
+            return center_loc
+        #print(f"Perin converter not found! inventory_perin_converter_match_threshold: {max_val}")

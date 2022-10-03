@@ -70,9 +70,9 @@ class WindowCapture:
         img = np.ascontiguousarray(img)
 
         # Convert image to gray
-        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-
-        return img
+        img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        
+        return img, img_gray
 
     # translate a pixel position on a screenshot image to a pixel position on the screen.
     # pos = (x, y)
