@@ -11,31 +11,32 @@ class HumanMouse:
         self.hwnd = hwnd
         self.window_rect = win32gui.GetWindowRect(self.hwnd)
 
-    def move(self, to_point, from_point=None, duration=0.5, human_curve=None):
-        if not from_point:
-            from_point = win32api.GetCursorPos()
-        if not human_curve:
-            human_curve = HumanCurve(from_point, to_point, targetPoints=25)
+    def move(self, to_point, duration=0.5, like_robot=False):
+        """
+        Move mouse from current mouse position to a given point, in a human way or like a robot.
+        :param to_point: tuple (x, y)
+        :param duration: float. Time in seconds for the movement.
+        :param like_robot: bool.
+        """
 
+        if like_robot:
+            win32api.SetCursorPos(to_point)
+            sleep(0.05)
+            return
+
+        from_point = win32api.GetCursorPos()
+        human_curve = HumanCurve(from_point, to_point, targetPoints=25)
         for point in human_curve.points:
             win32api.SetCursorPos((int(round(point[0])), int(round(point[1]))))
             sleep(round(duration / len(human_curve.points), 3))
 
-    def move_outside_game(self, from_point=None, duration=0.5, human_curve=None):
-        if not from_point:
-            from_point = win32api.GetCursorPos()
-        if not human_curve:
-            human_curve = HumanCurve(
-                from_point, self.__get_random_outside_point(), targetPoints=25
-            )
-
-        for point in human_curve.points:
-            win32api.SetCursorPos((int(round(point[0])), int(round(point[1]))))
-            sleep(round(duration / len(human_curve.points), 3))
-
-    def move_like_robot(self, pos, sleep_time=0.05):
-        win32api.SetCursorPos(pos)
-        sleep(sleep_time)
+    def move_outside_game(self, duration=0.5, like_robot=False):
+        """
+        Move mouse outside the game window.
+        :param duration: float. Time in seconds for the movement.
+        :param like_robot: bool.
+        """
+        self.move(self.__get_random_outside_point(), duration, like_robot)
 
     def right_click(self, pos=None, set_position=False):
         if set_position and pos:
