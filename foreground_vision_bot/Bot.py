@@ -13,7 +13,6 @@ from libs.WindowCapture import WindowCapture
 from libs.ComputerVision import ComputerVision as CV
 
 
-
 @throttle()
 def emit_error(gui_window, msg):
     gui_window.write_event_value("msg_red", msg)
@@ -53,7 +52,7 @@ class Bot:
     def setup(self, window_handler, gui_window):
         self.voice_engine = pyttsx3.init()
         self.window_capture = WindowCapture(window_handler)
-        self.mouse = HumanMouse()
+        self.mouse = HumanMouse(window_handler)
         self.keyboard = HumanKeyboard(window_handler)
         self.all_mobs = MobInfo.get_all_mobs()
         Thread(target=self.__frame_thread, args=(gui_window,), daemon=True).start()
@@ -112,11 +111,14 @@ class Bot:
             try:
                 self.debug_frame, self.frame = self.window_capture.get_screenshot()
             except:
-                emit_error(_throttle_sec=15, gui_window=gui_window, msg="Error getting the frame. Check if window is visible and attach again.")
+                emit_error(
+                    _throttle_sec=15,
+                    gui_window=gui_window,
+                    msg="Error getting the frame. Check if window is visible and attach again.",
+                )
                 sleep(3)
                 continue
 
-            
             if self.config["show_frames"]:
                 if current_mob_info_index >= (len(self.all_mobs) - 1):
                     current_mob_info_index = 0
@@ -182,9 +184,9 @@ class Bot:
         mob_pos_converted = self.window_capture.get_screen_position(mob_pos)
         self.mouse.move(to_point=mob_pos_converted, duration=0.1)
         if self.__check_mob_existence():
-            self.mouse.left_click(mob_pos)
+            self.mouse.left_click()
             self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
-            self.mouse.move_outside_game()
+            self.mouse.move_outside_game(duration=0.2)
             fight_time = time()
             while True:
                 if not self.__check_mob_still_alive(mob_type_cv):
@@ -231,7 +233,7 @@ class Bot:
         # Move the mouse to the perin converter and click
         center_point_translated = self.window_capture.get_screen_position(center_point)
         self.mouse.move(to_point=center_point_translated, duration=0.2)
-        self.mouse.left_click(center_point)
+        self.mouse.left_click()
         sleep(0.5)
 
         # Press the convert button, based on a fixed offset from the perin converter
@@ -239,7 +241,7 @@ class Bot:
         convert_all_pos = (center_point[0] + convert_all_offset[0], center_point[1] + convert_all_offset[1])
         convert_all_pos_converted = self.window_capture.get_screen_position(convert_all_pos)
         self.mouse.move(to_point=convert_all_pos_converted, duration=0.2)
-        self.mouse.left_click(convert_all_pos)
+        self.mouse.left_click()
         sleep(0.5)
 
         # Close the inventory
@@ -247,6 +249,7 @@ class Bot:
         return True
 
     """Match Methods"""
+
     def __get_mobs_position(self, mob_name_cv, mob_height_offset, debug=False):
         if mob_name_cv is None or mob_height_offset is None:
             return []
@@ -355,6 +358,6 @@ class Bot:
             self.debug_frame = drawn_frame
 
         if passed_threshold:
-            #print(f"Perin converter found! inventory_perin_converter_match_threshold: {max_val}")
+            # print(f"Perin converter found! inventory_perin_converter_match_threshold: {max_val}")
             return center_loc
-        #print(f"Perin converter not found! inventory_perin_converter_match_threshold: {max_val}")
+        # print(f"Perin converter not found! inventory_perin_converter_match_threshold: {max_val}")

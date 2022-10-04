@@ -3,29 +3,6 @@ from collections import deque
 
 import win32gui
 from pyfiglet import Figlet
-from pynput.mouse import Listener as MouseListener
-
-
-def get_focused_window_handle(voice_engine):
-    print("\nClick in the flyff window to get the process! The first click will be considered.")
-    hwnd = []
-
-    def on_click(x, y, button, pressed):
-        if not pressed:
-            hwnd.append(win32gui.GetForegroundWindow())
-            return False
-    try:
-        voice_engine.say("Select the game window")
-        voice_engine.runAndWait()
-    except:
-        pass
-
-    with MouseListener(on_click=on_click) as mouse_listener:
-        mouse_listener.join()
-
-    print("Window Selected: ", win32gui.GetWindowText(hwnd[0]))
-    time.sleep(0.5)
-    return hwnd[0]
 
 
 def get_window_handlers():
@@ -59,11 +36,9 @@ def get_point_near_center(center, points):
 
 
 def start_countdown(voice_engine, sleep_time_sec=5):
-    try:
+    if not voice_engine.isBusy():
         voice_engine.say(f"Starting in {sleep_time_sec} seconds")
         voice_engine.runAndWait()
-    except:
-        pass
     print("Starting", end="")
     for i in range(10):
         print(".", end="")

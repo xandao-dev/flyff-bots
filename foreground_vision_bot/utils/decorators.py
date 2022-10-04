@@ -50,7 +50,7 @@ class throttle(object):
 
     def __call__(self, fn):
         @functools.wraps(fn)
-        def wrapper(_throttle_sec, *args, **kwargs):
+        def wrapper(_throttle_sec=0, *args, **kwargs):
             self.throttle_period = timedelta(seconds=_throttle_sec)
             now = datetime.now()
             time_since_last_call = now - self.time_of_last_call
