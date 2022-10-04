@@ -14,11 +14,9 @@ def get_focused_window_handle(voice_engine):
         if not pressed:
             hwnd.append(win32gui.GetForegroundWindow())
             return False
-    try:
+    if not voice_engine.isBusy():
         voice_engine.say("Select the game window")
         voice_engine.runAndWait()
-    except:
-        pass
 
     with MouseListener(on_click=on_click) as mouse_listener:
         mouse_listener.join()
@@ -59,11 +57,9 @@ def get_point_near_center(center, points):
 
 
 def start_countdown(voice_engine, sleep_time_sec=5):
-    try:
+    if not voice_engine.isBusy():
         voice_engine.say(f"Starting in {sleep_time_sec} seconds")
         voice_engine.runAndWait()
-    except:
-        pass
     print("Starting", end="")
     for i in range(10):
         print(".", end="")
