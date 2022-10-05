@@ -35,7 +35,7 @@ class HumanMouse:
         :param duration: float. Time in seconds for the movement.
         :param like_robot: bool.
         """
-        self.move(self.__get_random_outside_point(), duration, like_robot)
+        self.move(self.__get_random_point_outside_game(), duration, like_robot)
 
     def left_click(self):
         """
@@ -101,7 +101,11 @@ class HumanMouse:
                 win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -120)
             sleep(round(uniform(0.015, 0.03), 4))
 
-    def __get_random_outside_point(self):
+    def __get_random_point_outside_game(self):
+        """
+        Get a random point outside the game window, but next to the borders of 
+        the window to optimize the movements.
+        """
         random_left = (self.window_rect[0], randint(self.window_rect[1], self.window_rect[3]))
         random_top = (randint(self.window_rect[0], self.window_rect[2]), self.window_rect[1])
         random_right = (self.window_rect[2], randint(self.window_rect[1], self.window_rect[3]))
