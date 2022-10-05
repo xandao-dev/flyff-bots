@@ -161,7 +161,8 @@ class Bot:
                 if current_mob_info_index >= (len(self.all_mobs) - 1):
                     self.__mobs_not_available_on_screen()
                 else:
-                    print("Current mob no found, checking another one.")
+                    pass
+                    # print("Current mob no found, checking another one.")
 
             if (self.config["mobs_kill_goal"] is not None) and (mobs_killed >= self.config["mobs_kill_goal"]):
                 break
