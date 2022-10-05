@@ -6,49 +6,45 @@ import win32ui
 
 
 class WindowCapture:
+    def __init__(self, hwnd, crop_area=(8, 30, 8, 8)):
+        """
+        :param hwnd: int. Handle of the window to capture.
+        :param crop_area: tuple (left, top, right, bottom). Area to crop from the window.
+                Default: (8, 30, 8, 8) which accounts for the game window border and titlebar.
+        """
 
-    # properties
-    w = 0
-    h = 0
-    hwnd = None
-    cropped_x = 0
-    cropped_y = 0
-    offset_x = 0
-    offset_y = 0
-
-    # constructor
-    def __init__(self, hwnd):
-        # find the handle for the window we want to capture
         self.hwnd = hwnd
         if not self.hwnd:
             raise Exception("Window not found")
 
-        # get the window size
-        window_rect = win32gui.GetWindowRect(self.hwnd)
-        self.w = window_rect[2] - window_rect[0]
-        self.h = window_rect[3] - window_rect[1]
+        self.crop_l = crop_area[0]
+        self.crop_t = crop_area[1]
+        self.crop_r = crop_area[2]
+        self.crop_b = crop_area[3]
 
-        # account for the window border and titlebar and cut them off
-        border_pixels = 8
-        titlebar_pixels = 30
-        self.w = self.w - (border_pixels * 2)
-        self.h = self.h - titlebar_pixels - border_pixels
-        self.cropped_x = border_pixels
-        self.cropped_y = titlebar_pixels
-
-        # set the cropped coordinates offset so we can translate screenshot
-        # images into actual screen positions
-        self.offset_x = window_rect[0] + self.cropped_x
-        self.offset_y = window_rect[1] + self.cropped_y
+        self.w = 0
+        self.h = 0
+        self.offset_x = 0
+        self.offset_y = 0
+        self.__update_size_and_offset()
 
     def get_screenshot(self):
+        """
+        Take a screenshot of the target window. Works with windows in background 
+        and foreground. Fullscreen or windowed. But doesn't work with minimized 
+        or windows outside the screen.
+
+        :return: (numpy array, numpy array). The first array is the image in BGR format, 3 channels.
+                The second array is the image in grayscale format, 1 channel.
+        """
+
         wDC = win32gui.GetWindowDC(self.hwnd)
         dcObj = win32ui.CreateDCFromHandle(wDC)
         cDC = dcObj.CreateCompatibleDC()
         dataBitMap = win32ui.CreateBitmap()
         dataBitMap.CreateCompatibleBitmap(dcObj, self.w, self.h)
         cDC.SelectObject(dataBitMap)
-        cDC.BitBlt((0, 0), (self.w, self.h), dcObj, (self.cropped_x, self.cropped_y), win32con.SRCCOPY)
+        cDC.BitBlt((0, 0), (self.w, self.h), dcObj, (self.crop_l, self.crop_t), win32con.SRCCOPY)
         signedIntsArray = dataBitMap.GetBitmapBits(True)
         img = np.fromstring(signedIntsArray, dtype="uint8")
         img.shape = (self.h, self.w, 4)
@@ -69,15 +65,39 @@ class WindowCapture:
         # https://github.com/opencv/opencv/issues/14866#issuecomment-580207109
         img = np.ascontiguousarray(img)
 
+        # DEBUGGING: Show the image
+        # cv.imshow("screenshot", img)
+        # cv.waitKey(1)
+
+        # DEBUGGING: Save the screenshot to disk
+        # cv.imwrite("screenshot.png", img)
+
         # Convert image to gray
         img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        
+
         return img, img_gray
 
-    # translate a pixel position on a screenshot image to a pixel position on the screen.
-    # pos = (x, y)
-    # WARNING: if you move the window being captured after execution is started, this will
-    # return incorrect coordinates, because the window position is only calculated in
-    # the __init__ constructor.
     def get_screen_position(self, pos):
+        """
+        Translate a pixel position on a screenshot image to a pixel position on the screen.
+        
+        :param pos: tuple (x, y). Position on the screenshot image.
+        :return: tuple (x, y). Position on the screen.
+        """
+        self.__update_size_and_offset()
         return (pos[0] + self.offset_x, pos[1] + self.offset_y)
+
+    def __update_size_and_offset(self):
+        """
+        Size doesn't change often, but it's a step to update the offset. Offset
+        do change often, it updates when we move the target window.
+        """
+        # get the window size
+        left, top, right, bottom = win32gui.GetWindowRect(self.hwnd)
+        self.w = right - left - self.crop_l - self.crop_r
+        self.h = bottom - top - self.crop_t - self.crop_b
+
+        # set the cropped coordinates offset so we can translate screenshot
+        # images into actual screen positions
+        self.offset_x = left + self.crop_l
+        self.offset_y = top + self.crop_t
