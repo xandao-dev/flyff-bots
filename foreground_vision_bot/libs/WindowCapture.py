@@ -28,7 +28,7 @@ class WindowCapture:
         self.offset_y = 0
         self.__update_size_and_offset()
 
-    def get_screenshot(self):
+    def get_frame(self):
         """
         Take a screenshot of the target window. Works with windows in background 
         and foreground. Fullscreen or windowed. But doesn't work with minimized 
@@ -77,10 +77,10 @@ class WindowCapture:
 
         return img, img_gray
 
-    def get_screen_position(self, pos):
+    def get_screen_pos(self, pos):
         """
         Translate a pixel position on a screenshot image to a pixel position on the screen.
-        
+
         :param pos: tuple (x, y). Position on the screenshot image.
         :return: tuple (x, y). Position on the screen.
         """

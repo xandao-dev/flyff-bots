@@ -6,17 +6,27 @@ from libs.human_mouse.HumanCurve import HumanCurve
 
 
 class HumanMouse:
-    def __init__(self, hwnd):
+    def __init__(self, hwnd, translator=None):
+        """
+        :param hwnd: int. Handle of the game window.
+        :param translator: Translator is a method that translates a point from 
+                the game window to the screen. It's provided by WindowCapture.
+        """
+
         self.hwnd = hwnd
         self.window_rect = win32gui.GetWindowRect(self.hwnd)
+        self.translator = translator
 
     def move(self, to_point, duration=0.5, like_robot=False):
         """
         Move mouse from current mouse position to a given point, in a human way or like a robot.
+        It translates the point from the game window to the screen if a translator is provided.
         :param to_point: tuple (x, y)
         :param duration: float. Time in seconds for the movement.
         :param like_robot: bool.
         """
+        if self.translator:
+            to_point = self.translator(to_point)
 
         if like_robot:
             win32api.SetCursorPos(to_point)
@@ -32,6 +42,7 @@ class HumanMouse:
     def move_outside_game(self, duration=0.5, like_robot=False):
         """
         Move mouse outside the game window.
+        It doesn't need a translator because it accounts for the window position.
         :param duration: float. Time in seconds for the movement.
         :param like_robot: bool.
         """
