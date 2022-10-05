@@ -317,6 +317,7 @@ class Gui:
                 [sg.DropDown(list(handlers.keys()), key="-DROP-"), sg.Button("Refresh")],
                 [sg.OK(), sg.Cancel()],
             ],
+            size=(350, 100)
         )
         while True:
             event, values = popup_window.read()
