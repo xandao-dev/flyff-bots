@@ -51,8 +51,8 @@ class Bot:
 
     def setup(self, window_handler, gui_window):
         self.voice_engine = pyttsx3.init()
-        self.window_capture = WindowCapture(window_handler)
-        self.mouse = HumanMouse(window_handler)
+        self.wincap = WindowCapture(window_handler)
+        self.mouse = HumanMouse(window_handler, self.wincap.get_screen_pos)
         self.keyboard = HumanKeyboard(window_handler)
         self.all_mobs = MobInfo.get_all_mobs()
         Thread(target=self.__frame_thread, args=(gui_window,), daemon=True).start()
@@ -109,7 +109,7 @@ class Bot:
         loop_time = time()
         while True:
             try:
-                self.debug_frame, self.frame = self.window_capture.get_screenshot()
+                self.debug_frame, self.frame = self.wincap.get_frame()
             except:
                 emit_error(
                     _throttle_sec=15,
@@ -161,7 +161,8 @@ class Bot:
                 if current_mob_info_index >= (len(self.all_mobs) - 1):
                     self.__mobs_not_available_on_screen()
                 else:
-                    print("Current mob no found, checking another one.")
+                    pass
+                    # print("Current mob no found, checking another one.")
 
             if (self.config["mobs_kill_goal"] is not None) and (mobs_killed >= self.config["mobs_kill_goal"]):
                 break
@@ -181,8 +182,7 @@ class Bot:
 
         monsters_count = mobs_killed
         mob_pos = get_point_near_center(frame_center, points)
-        mob_pos_converted = self.window_capture.get_screen_position(mob_pos)
-        self.mouse.move(to_point=mob_pos_converted, duration=0.1)
+        self.mouse.move(to_point=mob_pos, duration=0.1)
         if self.__check_mob_existence():
             self.mouse.left_click()
             self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
@@ -231,16 +231,14 @@ class Bot:
             return False
 
         # Move the mouse to the perin converter and click
-        center_point_translated = self.window_capture.get_screen_position(center_point)
-        self.mouse.move(to_point=center_point_translated, duration=0.2)
+        self.mouse.move(to_point=center_point, duration=0.2)
         self.mouse.left_click()
         sleep(0.5)
 
         # Press the convert button, based on a fixed offset from the perin converter
         convert_all_offset = (30, 40)
         convert_all_pos = (center_point[0] + convert_all_offset[0], center_point[1] + convert_all_offset[1])
-        convert_all_pos_converted = self.window_capture.get_screen_position(convert_all_pos)
-        self.mouse.move(to_point=convert_all_pos_converted, duration=0.2)
+        self.mouse.move(to_point=convert_all_pos, duration=0.2)
         self.mouse.left_click()
         sleep(0.5)
 
@@ -257,7 +255,7 @@ class Bot:
         # frame_cute_area 50px from each side of the frame to avoid some UI elements
         matches, drawn_frame = CV.match_template_multi(
             frame=self.frame,
-            frame_cut_area=(50, -50, 50, -50),
+            crop_area=(50, -50, 50, -50),
             template=mob_name_cv,
             threshold=self.config["mob_pos_match_threshold"],
             box_offset=(0, mob_height_offset),
@@ -280,7 +278,7 @@ class Bot:
         # frame_cute_area get the top of the screen to see if the mob type icon is still visible
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
-            frame_cut_area=(0, 50, 200, -200),
+            crop_area=(0, 50, 200, -200),
             template=mob_type_cv,
             threshold=self.config["mob_still_alive_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
@@ -305,7 +303,7 @@ class Bot:
         # frame_cute_area get the top of the screen to see if the mob life bar exists
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
-            frame_cut_area=(0, 50, 200, -200),
+            crop_area=(0, 50, 200, -200),
             template=GeneralAssets.MOB_LIFE_BAR,
             threshold=self.config["mob_existence_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
@@ -348,7 +346,7 @@ class Bot:
         # frame_cute_area 300px from top, because the inventory is big
         _, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
-            frame_cut_area=(300, 0, 0, 0),
+            crop_area=(300, 0, 0, 0),
             template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
             threshold=self.config["inventory_perin_converter_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
