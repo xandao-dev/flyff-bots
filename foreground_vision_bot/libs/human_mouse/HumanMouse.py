@@ -1,6 +1,5 @@
 from time import sleep
 from random import uniform, randint
-
 import win32api, win32con, win32gui
 
 from libs.human_mouse.HumanCurve import HumanCurve
@@ -38,21 +37,69 @@ class HumanMouse:
         """
         self.move(self.__get_random_outside_point(), duration, like_robot)
 
-    def right_click(self, pos=None, set_position=False):
-        if set_position and pos:
-            win32api.SetCursorPos(pos)
-            sleep(round(uniform(0.04, 0.07), 4))
-        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0)
-        sleep(round(uniform(0.010, 0.025), 4))
-        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0)
-
-    def left_click(self, pos=None, set_position=False):
-        if set_position and pos:
-            win32api.SetCursorPos(pos)
-            sleep(round(uniform(0.04, 0.07), 4))
+    def left_click(self):
+        """
+        Left click mouse at current mouse position. It uses a random time 
+        to simulate a human click.
+        """
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-        sleep(round(uniform(0.010, 0.025), 4))
+        sleep(round(uniform(0.015, 0.03), 4))
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+        sleep(round(uniform(0.015, 0.03), 4))
+
+    def double_left_click(self):
+        self.left_click()
+        self.left_click()
+
+    def drag_left_click(self, to_point, duration=0.5, like_robot=False):
+        """
+        Drag mouse from current mouse position to a given point, in a human way or like a robot.
+        :param to_point: tuple (x, y)
+        :param duration: float. Time in seconds for the movement.
+        :param like_robot: bool.
+        """
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+        sleep(round(uniform(0.015, 0.03), 4))
+        self.move(to_point, duration, like_robot)
+        sleep(round(uniform(0.015, 0.03), 4))
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+        sleep(round(uniform(0.015, 0.03), 4))
+
+    def right_click(self):
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0)
+        sleep(round(uniform(0.015, 0.03), 4))
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0)
+        sleep(round(uniform(0.015, 0.03), 4))
+
+    def double_right_click(self):
+        self.right_click()
+        self.right_click()
+
+    def drag_right_click(self, to_point, duration=0.5, like_robot=False):
+        """
+        Drag mouse from current mouse position to a given point, in a human way or like a robot.
+        :param to_point: tuple (x, y)
+        :param duration: float. Time in seconds for the movement.
+        :param like_robot: bool.
+        """
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0)
+        sleep(round(uniform(0.015, 0.03), 4))
+        self.move(to_point, duration, like_robot)
+        sleep(round(uniform(0.015, 0.03), 4))
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0)
+        sleep(round(uniform(0.015, 0.03), 4))
+
+    def scroll(self, isUp=True, times=1):
+        """
+        Scroll mouse wheel. 
+        :param isUp: Bool. True for up, False for down.
+        """
+        for _ in range(times):
+            if isUp:
+                win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 120)
+            else:
+                win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -120)
+            sleep(round(uniform(0.015, 0.03), 4))
 
     def __get_random_outside_point(self):
         random_left = (self.window_rect[0], randint(self.window_rect[1], self.window_rect[3]))

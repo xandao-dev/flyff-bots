@@ -184,7 +184,7 @@ class Bot:
         mob_pos_converted = self.window_capture.get_screen_position(mob_pos)
         self.mouse.move(to_point=mob_pos_converted, duration=0.1)
         if self.__check_mob_existence():
-            self.mouse.left_click(mob_pos)
+            self.mouse.left_click()
             self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
             self.mouse.move_outside_game(duration=0.2)
             fight_time = time()
@@ -233,7 +233,7 @@ class Bot:
         # Move the mouse to the perin converter and click
         center_point_translated = self.window_capture.get_screen_position(center_point)
         self.mouse.move(to_point=center_point_translated, duration=0.2)
-        self.mouse.left_click(center_point)
+        self.mouse.left_click()
         sleep(0.5)
 
         # Press the convert button, based on a fixed offset from the perin converter
@@ -241,7 +241,7 @@ class Bot:
         convert_all_pos = (center_point[0] + convert_all_offset[0], center_point[1] + convert_all_offset[1])
         convert_all_pos_converted = self.window_capture.get_screen_position(convert_all_pos)
         self.mouse.move(to_point=convert_all_pos_converted, duration=0.2)
-        self.mouse.left_click(convert_all_pos)
+        self.mouse.left_click()
         sleep(0.5)
 
         # Close the inventory
