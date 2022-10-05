@@ -257,7 +257,7 @@ class Bot:
         # frame_cute_area 50px from each side of the frame to avoid some UI elements
         matches, drawn_frame = CV.match_template_multi(
             frame=self.frame,
-            frame_cut_area=(50, -50, 50, -50),
+            crop_area=(50, -50, 50, -50),
             template=mob_name_cv,
             threshold=self.config["mob_pos_match_threshold"],
             box_offset=(0, mob_height_offset),
@@ -280,7 +280,7 @@ class Bot:
         # frame_cute_area get the top of the screen to see if the mob type icon is still visible
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
-            frame_cut_area=(0, 50, 200, -200),
+            crop_area=(0, 50, 200, -200),
             template=mob_type_cv,
             threshold=self.config["mob_still_alive_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
@@ -305,7 +305,7 @@ class Bot:
         # frame_cute_area get the top of the screen to see if the mob life bar exists
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
-            frame_cut_area=(0, 50, 200, -200),
+            crop_area=(0, 50, 200, -200),
             template=GeneralAssets.MOB_LIFE_BAR,
             threshold=self.config["mob_existence_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
@@ -348,7 +348,7 @@ class Bot:
         # frame_cute_area 300px from top, because the inventory is big
         _, _, center_loc, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
-            frame_cut_area=(300, 0, 0, 0),
+            crop_area=(300, 0, 0, 0),
             template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
             threshold=self.config["inventory_perin_converter_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,

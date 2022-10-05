@@ -18,7 +18,7 @@ class ComputerVision:
     @staticmethod
     def match_template(
         frame,
-        frame_cut_area=(0, 0, 0, 0),
+        crop_area=(0, 0, 0, 0),
         template=None,
         method=MATCH_METHODS["TM_CCOEFF_NORMED"],
         threshold=0.7,
@@ -29,7 +29,7 @@ class ComputerVision:
         Match template in a frame.
 
         :param frame: Frame to search in.
-        :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
+        :param crop_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
             Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0) with will not cut anything.
         :param template: Template to search for. Default is None, but it's required.
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
@@ -40,19 +40,19 @@ class ComputerVision:
         :return: max_val, max_loc, center_loc, passed_threshold, drawn_frame
         """
         # Cut frame if needed (row_start:row_end, col_start:col_end)
-        if frame_cut_area != (0, 0, 0, 0):
+        if crop_area != (0, 0, 0, 0):
             # row_end or col_end is 0, we translate it to the frame size
-            if frame_cut_area[1] == 0:
-                frame_cut_area = (frame_cut_area[0], frame.shape[0], frame_cut_area[2], frame_cut_area[3])
-            if frame_cut_area[3] == 0:
-                frame_cut_area = (frame_cut_area[0], frame_cut_area[1], frame_cut_area[2], frame.shape[1])
-            frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
+            if crop_area[1] == 0:
+                crop_area = (crop_area[0], frame.shape[0], crop_area[2], crop_area[3])
+            if crop_area[3] == 0:
+                crop_area = (crop_area[0], crop_area[1], crop_area[2], frame.shape[1])
+            frame = frame[crop_area[0] : crop_area[1], crop_area[2] : crop_area[3]]
 
         template_h = template.shape[0]
         template_w = template.shape[1]
         result = cv.matchTemplate(frame, template, method)
         _, max_val, _, max_loc = cv.minMaxLoc(result)
-        max_loc_corrected = (max_loc[0] + frame_cut_area[2], max_loc[1] + frame_cut_area[0])
+        max_loc_corrected = (max_loc[0] + crop_area[2], max_loc[1] + crop_area[0])
         center_loc = (max_loc_corrected[0] + template_w // 2, max_loc_corrected[1] + template_h // 2)
         passed_threshold = max_val >= threshold
 
@@ -71,7 +71,7 @@ class ComputerVision:
                 (text_w, text_h), _ = cv.getTextSize(text_to_draw, font_face, font_scale, font_thickness)
                 text_offset_x = (template_w - text_w) // 2
                 text_offset_y = text_h + 5 # 5px for some space between the text and the box
-                text_pos = (max_loc[0] + frame_cut_area[2] + text_offset_x, max_loc[1] + template_h + frame_cut_area[0] + text_offset_y)
+                text_pos = (max_loc[0] + crop_area[2] + text_offset_x, max_loc[1] + template_h + crop_area[0] + text_offset_y)
                 text_bg_color = (255, 255, 255)
                 cv.rectangle(frame_to_draw, text_pos, (text_pos[0] + text_w, text_pos[1] - text_h), text_bg_color, -1)
                 cv.putText(
@@ -90,7 +90,7 @@ class ComputerVision:
     @staticmethod
     def match_template_multi(
         frame,
-        frame_cut_area=(0, 0, 0, 0),
+        crop_area=(0, 0, 0, 0),
         template=None,
         method=MATCH_METHODS["TM_CCOEFF_NORMED"],
         threshold=0.7,
@@ -104,7 +104,7 @@ class ComputerVision:
         Match template, multiple times, in image. Return only the matches that pass the threshold.
 
         :param frame: Frame to search in.
-        :param frame_cut_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
+        :param crop_area: Area to cut off from the frame, it's a tuple in the following format: (top, bottom, left, right).
             Eg.: (50, -50, 50, -50) will cut 50px from top, bottom, left and right. Default: (0, 0, 0, 0) which will not cut anything.
         :param template: Template to search for. Default is None, but it's required.
         :param method: Method to use for matching. Default is TM_CCOEFF_NORMED.
@@ -118,13 +118,13 @@ class ComputerVision:
         :return: matches, drawn_frame
         """
         # Cut frame if needed (row_start:row_end, col_start:col_end)
-        if frame_cut_area != (0, 0, 0, 0):
+        if crop_area != (0, 0, 0, 0):
             # row_end or col_end is 0, we translate it to the frame size
-            if frame_cut_area[1] == 0:
-                frame_cut_area = (frame_cut_area[0], frame.shape[0], frame_cut_area[2], frame_cut_area[3])
-            if frame_cut_area[3] == 0:
-                frame_cut_area = (frame_cut_area[0], frame_cut_area[1], frame_cut_area[2], frame.shape[1])
-            frame = frame[frame_cut_area[0] : frame_cut_area[1], frame_cut_area[2] : frame_cut_area[3]]
+            if crop_area[1] == 0:
+                crop_area = (crop_area[0], frame.shape[0], crop_area[2], crop_area[3])
+            if crop_area[3] == 0:
+                crop_area = (crop_area[0], crop_area[1], crop_area[2], frame.shape[1])
+            frame = frame[crop_area[0] : crop_area[1], crop_area[2] : crop_area[3]]
 
         template_h = template.shape[0]
         template_w = template.shape[1]
@@ -156,8 +156,8 @@ class ComputerVision:
             # print('Found template')
             for (x, y, w, h) in rectangles:
                 # Determine the center position, initial point + half size + correction
-                center_x = x + (w // 2) + frame_cut_area[2]
-                center_y = y + (h // 2) + frame_cut_area[0]
+                center_x = x + (w // 2) + crop_area[2]
+                center_y = y + (h // 2) + crop_area[0]
 
                 # Save the matches
                 matches.append((center_x, center_y))
@@ -169,8 +169,8 @@ class ComputerVision:
                 if draw_rect:
                     line_color = (0, 255, 0)
                     line_type = cv.LINE_4
-                    top_left = (x + frame_cut_area[2], y + frame_cut_area[0])
-                    bottom_right = (x + w + frame_cut_area[2], y + h + frame_cut_area[0])
+                    top_left = (x + crop_area[2], y + crop_area[0])
+                    bottom_right = (x + w + crop_area[2], y + h + crop_area[0])
                     cv.rectangle(
                         frame_to_draw, top_left, bottom_right, color=line_color, lineType=line_type, thickness=2
                     )
@@ -194,7 +194,7 @@ class ComputerVision:
                     (text_w, text_h), _ = cv.getTextSize(text, font_face, font_scale, font_thickness)
                     text_offset_x = (w - text_w) // 2
                     text_offset_y = text_h + 5 if draw_rect else -h + text_h + 10
-                    text_pos = (x + frame_cut_area[2] + text_offset_x, y + h + frame_cut_area[0] + text_offset_y)
+                    text_pos = (x + crop_area[2] + text_offset_x, y + h + crop_area[0] + text_offset_y)
                     cv.putText(
                         frame_to_draw,
                         text,
