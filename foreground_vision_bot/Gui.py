@@ -27,13 +27,6 @@ class Gui:
             "1280x800": (1280, 800),
             "1280x1024": (1280, 1024),
             "1366x768": (1366, 768),
-            "1400x1050": (1400, 1050),
-            "1440x900": (1440, 900),
-            "1600x900": (1600, 900),
-            "1600x1200": (1600, 1200),
-            "1680x1050": (1680, 1050),
-            "1920x1000": (1920, 1000),
-            "1920x1080": (1920, 1080),
         }
         sg.theme(theme)
 
@@ -71,7 +64,9 @@ class Gui:
             if event == "-MOB_EXISTENCE_MATCH_THRESHOLD-":
                 bot.set_config(mob_existence_match_threshold=values["-MOB_EXISTENCE_MATCH_THRESHOLD-"])
             if event == "-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-":
-                bot.set_config(inventory_perin_converter_match_threshold=values["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"])
+                bot.set_config(
+                    inventory_perin_converter_match_threshold=values["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"]
+                )
             if event == "-INVENTORY_ICONS_MATCH_THRESHOLD-":
                 bot.set_config(inventory_icons_match_threshold=values["-INVENTORY_ICONS_MATCH_THRESHOLD-"])
             if event == "-MOBS_KILL_GOAL-":
@@ -136,7 +131,7 @@ class Gui:
                 img = values.get("debug_frame", None)
                 if img is not None:
                     resolution = values["-DEBUG_IMG_WIDTH-"]
-                    w, h = self.frame_resolutions[resolution] 
+                    w, h = self.frame_resolutions[resolution]
                     img = cv.resize(img, (w, h))
                     imgbytes = cv.imencode(".png", img)[1].tobytes()
                     self.window["-DEBUG_IMAGE-"].update(data=imgbytes)
@@ -145,8 +140,7 @@ class Gui:
         self.window.close()
 
     def __set_hotkeys(self):
-        self.window.bind("<Alt_L><s>", "-START_BOT-")
-        self.window.bind("<Alt_L><d>", "-STOP_BOT-")
+        self.window.bind("<Alt_L><s>", "-STOP_BOT-")
 
     def __get_layout(self):
         title = [sg.Text("Flyff FVF", font="Any 18")]
@@ -158,19 +152,28 @@ class Gui:
                         "Actions:",
                         [
                             [
-                                sg.Column(
-                                    [
-                                        [
-                                            sg.Button("Attach Window", key="-ATTACH_WINDOW-"),
-                                            sg.Button("Start (Alt+s)", disabled=True, key="-START_BOT-"),
-                                            sg.Button("Stop (Alt+d)", disabled=True, key="-STOP_BOT-"),
-                                            sg.Button("Exit"),
-                                        ]
-                                    ],
-                                    pad=(0, 0),
-                                )
+                                sg.Button("Attach Window", key="-ATTACH_WINDOW-"),
+                                sg.Button("Start", disabled=True, key="-START_BOT-"),
+                                sg.Button("Stop (Alt+s)", disabled=True, key="-STOP_BOT-"),
+                                sg.Button("Exit"),
                             ]
                         ],
+                        pad=((5, 15), (10, 5)),
+                        size=(290, 55),
+                    )
+                ],
+                [
+                    sg.Frame(
+                        "Mobs Configuration:",
+                        [
+                            [
+                                sg.Button("Select Mobs", key="-SELECT_MOBS-"),
+                                sg.Button("Add Mob", disabled=True, key="-ADD_MOB-"),
+                                sg.Button("Delete Mob", disabled=True, key="-DELETE_MOB-"),
+                            ]
+                        ],
+                        pad=((5, 15), (10, 5)),
+                        size=(290, 55),
                     )
                 ],
                 [
@@ -178,7 +181,11 @@ class Gui:
                         "Options:",
                         [
                             [sg.Checkbox("Show bot's vision", False, enable_events=True, key="-SHOW_FRAMES-")],
-                            [sg.Checkbox("Show mobs boxes", False, disabled=True, enable_events=True, key="-SHOW_BOXES-")],
+                            [
+                                sg.Checkbox(
+                                    "Show mobs boxes", False, disabled=True, enable_events=True, key="-SHOW_BOXES-"
+                                )
+                            ],
                             [
                                 sg.Checkbox(
                                     "Show mobs markers", False, disabled=True, enable_events=True, key="-SHOW_MARKERS-"
@@ -186,7 +193,11 @@ class Gui:
                             ],
                             [
                                 sg.Checkbox(
-                                    "Show matches text", False, disabled=True, enable_events=True, key="-SHOW_MATCHES_TEXT-"
+                                    "Show matches text",
+                                    False,
+                                    disabled=True,
+                                    enable_events=True,
+                                    key="-SHOW_MATCHES_TEXT-",
                                 )
                             ],
                             [sg.Text("Mob position Match Threshold:")],
@@ -259,13 +270,19 @@ class Gui:
                             ],
                             [sg.Text("Delay to check if mob is still alive (s):")],
                             [
-                                sg.InputText("0.25", size=(10, 1), enable_events=True, key="-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"),
+                                sg.InputText(
+                                    "0.25", size=(10, 1), enable_events=True, key="-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"
+                                ),
                             ],
                             [sg.Text("Timer to convert penya to perins (m):")],
                             [
-                                sg.InputText("30", size=(10, 1), enable_events=True, key="-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"),
+                                sg.InputText(
+                                    "30", size=(10, 1), enable_events=True, key="-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"
+                                ),
                             ],
                         ],
+                        pad=((5, 15), (5, 5)),
+                        size=(290, 650),
                     )
                 ],
                 [
@@ -273,8 +290,10 @@ class Gui:
                         "Status:",
                         [
                             [sg.Text("Video FPS:", size=(15, 1), key="-VIDEO_FPS-")],
-                            [sg.Multiline(size=(30, 10), key="-ML-", autoscroll=True)],
+                            [sg.Multiline(size=(40, 10), key="-ML-", autoscroll=True)],
                         ],
+                        pad=((5, 15), (5, 10)),
+                        size=(290, 220),
                     )
                 ],
             ],
@@ -317,7 +336,7 @@ class Gui:
                 [sg.DropDown(list(handlers.keys()), key="-DROP-"), sg.Button("Refresh")],
                 [sg.OK(), sg.Cancel()],
             ],
-            size=(350, 100)
+            size=(350, 100),
         )
         while True:
             event, values = popup_window.read()
@@ -330,3 +349,38 @@ class Gui:
             if event == "OK":
                 popup_window.close()
                 return handlers[values["-DROP-"]]
+
+    def __select_mobs_popup(self, all_mobs, selected_mobs):
+        mobs = ["batto", "carvi", "castor", "cetiri", "kretan"]  # all_mobs
+        selected_mobs = ["batto", "carvi"]  # selected_mobs
+
+        popup_window = sg.Window(
+            "Select Mobs",
+            [
+                [sg.Text("Please select the mobs to kill:")],
+                [[sg.Text("Search: ")], [sg.Input(size=(20, 1), enable_events=True, key="-MOBS_SEARCH-")]][
+                    sg.Listbox(values=mobs, size=(20, 10), key="-MOBS-")
+                ],
+                [sg.Button("Reset"), sg.OK()],
+            ],
+        )
+        while True:
+            event, values = popup_window.read()
+
+            if values["-MOBS_SEARCH-"] != "":
+                search = values["-MOBS_SEARCH-"]
+                filtered_mobs = [x for x in mobs if search in x]
+                popup_window["-MOBS-"].update(filtered_mobs)
+            else:
+                popup_window["-MOBS-"].update(mobs)
+
+            if event == "-MOBS-" and len(values["-MOBS-"]):
+                # selected_mobs.append(values['-MOBS-'][0])
+                sg.popup("Selected ", values["-MOBS-"])
+
+            if event in (sg.WIN_CLOSED, "OK"):
+                popup_window.close()
+                return values["-MOBS-"]
+            if event == "Reset":
+                # FIXME - reset listbox
+                popup_window["-MOBS-"].update(values=list(self.mobs.keys()))
