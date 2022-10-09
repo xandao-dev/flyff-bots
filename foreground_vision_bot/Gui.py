@@ -46,11 +46,12 @@ class Gui:
 
             if event == "-SHOW_FRAMES-":
                 bot.set_config(show_frames=values["-SHOW_FRAMES-"])
-                self.window["-SHOW_BOXES-"].update(disabled=(not values["-SHOW_FRAMES-"]))
-                self.window["-SHOW_MARKERS-"].update(disabled=(not values["-SHOW_FRAMES-"]))
-                self.window["-SHOW_MATCHES_TEXT-"].update(disabled=(not values["-SHOW_FRAMES-"]))
-                if not values["-SHOW_FRAMES-"]:
-                    self.window["-DEBUG_IMAGE-"].update(data=None)
+
+                self.window["-SHOW_MATCHES_TEXT-"].update(visible=(values["-SHOW_FRAMES-"]))
+                self.window["-SHOW_BOXES-"].update(visible=(values["-SHOW_FRAMES-"]))
+                self.window["-SHOW_MARKERS-"].update(visible=(values["-SHOW_FRAMES-"]))
+                self.window["-VISION_FRAME-"].update(visible=(values["-SHOW_FRAMES-"]))
+
             if event == "-SHOW_BOXES-":
                 bot.set_config(show_mobs_pos_boxes=values["-SHOW_BOXES-"])
             if event == "-SHOW_MARKERS-":
@@ -153,161 +154,167 @@ class Gui:
     def __get_layout(self):
         title = [sg.Text("Flyff FVF", font="Any 18")]
 
+        actions = [
+            sg.Frame(
+                "Actions:",
+                [
+                    [
+                        sg.Button("Attach Window", key="-ATTACH_WINDOW-"),
+                        sg.Button("Start", disabled=True, key="-START_BOT-"),
+                        sg.Button("Stop (Alt+s)", disabled=True, key="-STOP_BOT-"),
+                        sg.Button("Exit"),
+                    ],
+                    [
+                        sg.Text("Attached window: ", font="Any 8", pad=((5, 0), (0, 0))),
+                        sg.Text("", font="Any 8", text_color="red", key="-ATTACHED_WINDOW-", pad=(0, 0)),
+                    ],
+                ],
+                pad=((5, 15), (0, 5)),
+                size=(290, 70),
+            )
+        ]
+        mobs_config = [
+            sg.Frame(
+                "Mobs Configuration:",
+                [
+                    [
+                        sg.Button("Select Mobs", key="-SELECT_MOBS-"),
+                        sg.Button("Add Mob", disabled=True, key="-ADD_MOB-"),
+                        sg.Button("Delete Mob", disabled=True, key="-DELETE_MOB-"),
+                    ]
+                ],
+                pad=((5, 15), (10, 5)),
+                size=(290, 55),
+            )
+        ]
+        bot_options = [
+            sg.Frame(
+                "Options:",
+                [
+                    [sg.Checkbox("Show bot's vision", False, enable_events=True, key="-SHOW_FRAMES-")],
+                    [
+                        sg.pin(
+                            sg.Checkbox(
+                                "Show matches text",
+                                False,
+                                visible=False,
+                                enable_events=True,
+                                key="-SHOW_MATCHES_TEXT-",
+                            )
+                        )
+                    ],
+                    [
+                        sg.pin(
+                            sg.Checkbox("Show mobs boxes", False, visible=False, enable_events=True, key="-SHOW_BOXES-")
+                        )
+                    ],
+                    [
+                        sg.pin(
+                            sg.Checkbox(
+                                "Show mobs markers", False, visible=False, enable_events=True, key="-SHOW_MARKERS-"
+                            )
+                        )
+                    ],
+                    [sg.Text("Mob position Match Threshold:")],
+                    [
+                        sg.Slider(
+                            (0.1, 0.9),
+                            0.7,
+                            0.05,
+                            enable_events=True,
+                            orientation="h",
+                            size=(20, 15),
+                            key="-MOB_POS_MATCH_THRESHOLD-",
+                        )
+                    ],
+                    [sg.Text("Mob still alive match threshold:")],
+                    [
+                        sg.Slider(
+                            (0.1, 0.9),
+                            0.7,
+                            0.05,
+                            enable_events=True,
+                            orientation="h",
+                            size=(20, 15),
+                            key="-MOB_STILL_ALIVE_MATCH_THRESHOLD-",
+                        ),
+                    ],
+                    [sg.Text("Mob existence match threshold:")],
+                    [
+                        sg.Slider(
+                            (0.1, 0.9),
+                            0.7,
+                            0.05,
+                            enable_events=True,
+                            orientation="h",
+                            size=(20, 15),
+                            key="-MOB_EXISTENCE_MATCH_THRESHOLD-",
+                        ),
+                    ],
+                    [sg.Text("Inventory perin converter match threshold:")],
+                    [
+                        sg.Slider(
+                            (0.1, 0.9),
+                            0.7,
+                            0.05,
+                            enable_events=True,
+                            orientation="h",
+                            size=(20, 15),
+                            key="-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-",
+                        ),
+                    ],
+                    [sg.Text("Inventory icons match threshold:")],
+                    [
+                        sg.Slider(
+                            (0.1, 0.9),
+                            0.7,
+                            0.05,
+                            enable_events=True,
+                            orientation="h",
+                            size=(20, 15),
+                            key="-INVENTORY_ICONS_MATCH_THRESHOLD-",
+                        ),
+                    ],
+                    [
+                        sg.Text("Mobs kill goal:"),
+                        sg.InputText("infinity", size=(10, 1), enable_events=True, key="-MOBS_KILL_GOAL-"),
+                    ],
+                    [
+                        sg.Text("Fight Time Limit (s):"),
+                        sg.InputText("8", size=(10, 1), enable_events=True, key="-FIGHT_TIME_LIMIT_SEC-"),
+                    ],
+                    [sg.Text("Delay to check if mob is still alive (s):")],
+                    [
+                        sg.InputText(
+                            "0.25", size=(10, 1), enable_events=True, key="-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"
+                        ),
+                    ],
+                    [sg.Text("Timer to convert penya to perins (m):")],
+                    [
+                        sg.InputText("30", size=(10, 1), enable_events=True, key="-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"),
+                    ],
+                ],
+                pad=((5, 15), (5, 5)),
+                size=(290, 650),
+            )
+        ]
+        bot_status = [
+            sg.Frame(
+                "Status:",
+                [
+                    [sg.Text("Video FPS:", size=(15, 1), key="-VIDEO_FPS-")],
+                    [sg.Multiline(size=(40, 10), key="-ML-", autoscroll=True)],
+                ],
+                pad=((5, 15), (5, 10)),
+                size=(290, 220),
+            )
+        ]
         main = sg.Column(
             [
-                [
-                    sg.Frame(
-                        "Actions:",
-                        [
-                            [
-                                sg.Button("Attach Window", key="-ATTACH_WINDOW-"),
-                                sg.Button("Start", disabled=True, key="-START_BOT-"),
-                                sg.Button("Stop (Alt+s)", disabled=True, key="-STOP_BOT-"),
-                                sg.Button("Exit"),
-                            ],
-                            [
-                                sg.Text("Attached window: ", font="Any 8", pad=((5, 0), (0, 0))),
-                                sg.Text("", font="Any 8", text_color="red", key="-ATTACHED_WINDOW-", pad=(0, 0)),
-                            ],
-                        ],
-                        pad=((5, 15), (0, 5)),
-                        size=(290, 70),
-                    )
-                ],
-                [
-                    sg.Frame(
-                        "Mobs Configuration:",
-                        [
-                            [
-                                sg.Button("Select Mobs", key="-SELECT_MOBS-"),
-                                sg.Button("Add Mob", disabled=True, key="-ADD_MOB-"),
-                                sg.Button("Delete Mob", disabled=True, key="-DELETE_MOB-"),
-                            ]
-                        ],
-                        pad=((5, 15), (10, 5)),
-                        size=(290, 55),
-                    )
-                ],
-                [
-                    sg.Frame(
-                        "Options:",
-                        [
-                            [sg.Checkbox("Show bot's vision", False, enable_events=True, key="-SHOW_FRAMES-")],
-                            [
-                                sg.Checkbox(
-                                    "Show mobs boxes", False, disabled=True, enable_events=True, key="-SHOW_BOXES-"
-                                )
-                            ],
-                            [
-                                sg.Checkbox(
-                                    "Show mobs markers", False, disabled=True, enable_events=True, key="-SHOW_MARKERS-"
-                                )
-                            ],
-                            [
-                                sg.Checkbox(
-                                    "Show matches text",
-                                    False,
-                                    disabled=True,
-                                    enable_events=True,
-                                    key="-SHOW_MATCHES_TEXT-",
-                                )
-                            ],
-                            [sg.Text("Mob position Match Threshold:")],
-                            [
-                                sg.Slider(
-                                    (0.1, 0.9),
-                                    0.7,
-                                    0.05,
-                                    enable_events=True,
-                                    orientation="h",
-                                    size=(20, 15),
-                                    key="-MOB_POS_MATCH_THRESHOLD-",
-                                )
-                            ],
-                            [sg.Text("Mob still alive match threshold:")],
-                            [
-                                sg.Slider(
-                                    (0.1, 0.9),
-                                    0.7,
-                                    0.05,
-                                    enable_events=True,
-                                    orientation="h",
-                                    size=(20, 15),
-                                    key="-MOB_STILL_ALIVE_MATCH_THRESHOLD-",
-                                ),
-                            ],
-                            [sg.Text("Mob existence match threshold:")],
-                            [
-                                sg.Slider(
-                                    (0.1, 0.9),
-                                    0.7,
-                                    0.05,
-                                    enable_events=True,
-                                    orientation="h",
-                                    size=(20, 15),
-                                    key="-MOB_EXISTENCE_MATCH_THRESHOLD-",
-                                ),
-                            ],
-                            [sg.Text("Inventory perin converter match threshold:")],
-                            [
-                                sg.Slider(
-                                    (0.1, 0.9),
-                                    0.7,
-                                    0.05,
-                                    enable_events=True,
-                                    orientation="h",
-                                    size=(20, 15),
-                                    key="-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-",
-                                ),
-                            ],
-                            [sg.Text("Inventory icons match threshold:")],
-                            [
-                                sg.Slider(
-                                    (0.1, 0.9),
-                                    0.7,
-                                    0.05,
-                                    enable_events=True,
-                                    orientation="h",
-                                    size=(20, 15),
-                                    key="-INVENTORY_ICONS_MATCH_THRESHOLD-",
-                                ),
-                            ],
-                            [
-                                sg.Text("Mobs kill goal:"),
-                                sg.InputText("infinity", size=(10, 1), enable_events=True, key="-MOBS_KILL_GOAL-"),
-                            ],
-                            [
-                                sg.Text("Fight Time Limit (s):"),
-                                sg.InputText("8", size=(10, 1), enable_events=True, key="-FIGHT_TIME_LIMIT_SEC-"),
-                            ],
-                            [sg.Text("Delay to check if mob is still alive (s):")],
-                            [
-                                sg.InputText(
-                                    "0.25", size=(10, 1), enable_events=True, key="-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"
-                                ),
-                            ],
-                            [sg.Text("Timer to convert penya to perins (m):")],
-                            [
-                                sg.InputText(
-                                    "30", size=(10, 1), enable_events=True, key="-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"
-                                ),
-                            ],
-                        ],
-                        pad=((5, 15), (5, 5)),
-                        size=(290, 650),
-                    )
-                ],
-                [
-                    sg.Frame(
-                        "Status:",
-                        [
-                            [sg.Text("Video FPS:", size=(15, 1), key="-VIDEO_FPS-")],
-                            [sg.Multiline(size=(40, 10), key="-ML-", autoscroll=True)],
-                        ],
-                        pad=((5, 15), (5, 10)),
-                        size=(290, 220),
-                    )
-                ],
+                actions,
+                mobs_config,
+                bot_options,
+                bot_status,
             ],
             pad=(0, 0),
             scrollable=True,
@@ -318,19 +325,23 @@ class Gui:
         video = sg.Column(
             [
                 [
-                    sg.Frame(
-                        "Bot's Vision:",
-                        [
+                    sg.pin(
+                        sg.Frame(
+                            "Bot's Vision:",
                             [
-                                sg.Text("Image Resolution:"),
-                                sg.Combo(
-                                    list(self.frame_resolutions.keys()),
-                                    default_value="400x300",
-                                    key="-DEBUG_IMG_WIDTH-",
-                                ),
+                                [
+                                    sg.Text("Image Resolution:"),
+                                    sg.Combo(
+                                        list(self.frame_resolutions.keys()),
+                                        default_value="400x300",
+                                        key="-DEBUG_IMG_WIDTH-",
+                                    ),
+                                ],
+                                [sg.Image(filename="", key="-DEBUG_IMAGE-")],
                             ],
-                            [sg.Image(filename="", key="-DEBUG_IMAGE-")],
-                        ],
+                            visible=False,
+                            key="-VISION_FRAME-",
+                        )
                     )
                 ]
             ],
@@ -338,6 +349,28 @@ class Gui:
         )
 
         return [title, [main, video]]
+
+    def __collapsible_section(self, layout, key, title="", arrows=(sg.SYMBOL_DOWN, sg.SYMBOL_UP), collapsed=False):
+        """
+        User Defined Element
+        A "collapsable section" element. Like a container element that can be collapsed and brought back
+        :param layout:Tuple[List[sg.Element]]: The layout for the section
+        :param key:Any: Key used to make this section visible / invisible
+        :param title:str: Title to show next to arrow
+        :param arrows:Tuple[str, str]: The strings to use to show the section is (Open, Closed).
+        :param collapsed:bool: If True, then the section begins in a collapsed state
+        :return:sg.Column: Column including the arrows, title and the layout that is pinned
+        """
+        return sg.Column(
+            [
+                [
+                    sg.T((arrows[1] if collapsed else arrows[0]), enable_events=True, k=key + "-BUTTON-"),
+                    sg.T(title, enable_events=True, key=key + "-TITLE-"),
+                ],
+                [sg.pin(sg.Column(layout, key=key, visible=not collapsed, metadata=arrows))],
+            ],
+            pad=(0, 0),
+        )
 
     def __attach_window_popup(self):
         handlers = get_window_handlers()
