@@ -111,21 +111,29 @@ class Gui:
             if event == "video_fps":
                 self.window["-VIDEO_FPS-"].update(values["video_fps"])
 
+            # ACTIONS - Button events
             if event == "-ATTACH_WINDOW-":
-                window_handler = self.__attach_window_popup()
-                if window_handler:
+                game_window_name, game_window_handler = self.__attach_window_popup()
+                if game_window_name and game_window_handler:
                     bot.stop()
-                    bot.setup(window_handler, self.window)
+                    bot.setup(game_window_handler, self.window)
+                    truncated_game_window_name = (
+                        game_window_name[:30] + "..." if len(game_window_name) > 30 else game_window_name
+                    )
+                    self.window["-ATTACHED_WINDOW-"].update(truncated_game_window_name)
                     self.window["-START_BOT-"].update(disabled=False)
                     self.window["-STOP_BOT-"].update(disabled=True)
+                    self.window["-SELECT_MOBS-"].update(disabled=False)
             if event == "-START_BOT-":
                 bot.start(self.window)
                 self.window["-START_BOT-"].update(disabled=True)
                 self.window["-STOP_BOT-"].update(disabled=False)
+                self.window["-SELECT_MOBS-"].update(disabled=True)
             if event == "-STOP_BOT-":
                 bot.stop()
                 self.window["-START_BOT-"].update(disabled=False)
                 self.window["-STOP_BOT-"].update(disabled=True)
+                self.window["-SELECT_MOBS-"].update(disabled=False)
 
             if values["-SHOW_FRAMES-"]:
                 img = values.get("debug_frame", None)
@@ -156,10 +164,14 @@ class Gui:
                                 sg.Button("Start", disabled=True, key="-START_BOT-"),
                                 sg.Button("Stop (Alt+s)", disabled=True, key="-STOP_BOT-"),
                                 sg.Button("Exit"),
-                            ]
+                            ],
+                            [
+                                sg.Text("Attached window: ", font="Any 8", pad=((5, 0), (0, 0))),
+                                sg.Text("", font="Any 8", text_color="red", key="-ATTACHED_WINDOW-", pad=(0, 0)),
+                            ],
                         ],
-                        pad=((5, 15), (10, 5)),
-                        size=(290, 55),
+                        pad=((5, 15), (0, 5)),
+                        size=(290, 70),
                     )
                 ],
                 [
@@ -336,7 +348,7 @@ class Gui:
                 [sg.DropDown(list(handlers.keys()), key="-DROP-"), sg.Button("Refresh")],
                 [sg.OK(), sg.Cancel()],
             ],
-            size=(350, 100),
+            size=(400, 100),
         )
         while True:
             event, values = popup_window.read()
@@ -345,10 +357,10 @@ class Gui:
                 popup_window["-DROP-"].update(values=list(handlers.keys()))
             if event in (sg.WIN_CLOSED, "Cancel"):
                 popup_window.close()
-                return None
+                return None, None
             if event == "OK":
                 popup_window.close()
-                return handlers[values["-DROP-"]]
+                return values["-DROP-"], handlers[values["-DROP-"]]
 
     def __select_mobs_popup(self, all_mobs, selected_mobs):
         mobs = ["batto", "carvi", "castor", "cetiri", "kretan"]  # all_mobs
