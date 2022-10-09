@@ -50,6 +50,8 @@ class Gui:
                 self.window["-SHOW_BOXES-"].update(visible=(values["-SHOW_FRAMES-"]))
                 self.window["-SHOW_MARKERS-"].update(visible=(values["-SHOW_FRAMES-"]))
                 self.window["-VISION_FRAME-"].update(visible=(values["-SHOW_FRAMES-"]))
+                self.window.refresh() # Combined with contents_changed, will compute the new size of the element
+                self.window["-MAIN_COLUMN-"].contents_changed()
             if event == "-SHOW_BOXES-":
                 bot.set_config(show_mobs_pos_boxes=values["-SHOW_BOXES-"])
             if event == "-SHOW_MARKERS-":
@@ -67,6 +69,8 @@ class Gui:
                     if self.window["-BOT_THRESHOLD_OPTIONS-"].visible
                     else self.window["-BOT_THRESHOLD_OPTIONS-"].metadata[1]
                 )
+                self.window.refresh() # Combined with contents_changed, will compute the new size of the element
+                self.window["-MAIN_COLUMN-"].contents_changed()
             if event == "-MOB_POS_MATCH_THRESHOLD-":
                 bot.set_config(mob_pos_match_threshold=values["-MOB_POS_MATCH_THRESHOLD-"])
             if event == "-MOB_STILL_ALIVE_MATCH_THRESHOLD-":
@@ -310,11 +314,13 @@ class Gui:
                             )
                         )
                     ],
+                    [sg.HorizontalSeparator()],
                     [
                         Collapsible(
                             bot_threshold_options, "-BOT_THRESHOLD_OPTIONS-", "Threshold Options", collapsed=True
                         )
                     ],
+                    [sg.HorizontalSeparator()],
                     [
                         sg.Text("Mobs kill goal:"),
                         sg.InputText("infinity", size=(10, 1), enable_events=True, key="-MOBS_KILL_GOAL-"),
@@ -335,7 +341,7 @@ class Gui:
                     ],
                 ],
                 pad=((5, 15), (5, 5)),
-                size=(290, 650),
+                expand_x=True,
             )
         ]
         bot_status = [
@@ -343,10 +349,10 @@ class Gui:
                 "Status:",
                 [
                     [sg.Text("Video FPS:", size=(15, 1), key="-VIDEO_FPS-")],
-                    [sg.Multiline(size=(40, 10), key="-ML-", autoscroll=True)],
+                    [sg.Multiline(size=(35, 10), key="-ML-", autoscroll=True, expand_x=True)],
                 ],
                 pad=((5, 15), (5, 10)),
-                size=(290, 220),
+                expand_x=True,
             )
         ]
         main = sg.Column(
@@ -357,9 +363,11 @@ class Gui:
                 bot_status,
             ],
             pad=(0, 0),
+            size=(300, 600),
             scrollable=True,
             vertical_scroll_only=True,
             expand_y=True,
+            key="-MAIN_COLUMN-",
         )
 
         video = sg.Column(
