@@ -6,12 +6,13 @@ from utils.helpers import get_window_handlers
 
 class Gui:
     def __init__(self, theme="DarkAmber"):
-        self.logger_events = ["msg", "msg_red", "msg_purple", "msg_blue"]
+        self.logger_events = ["msg", "msg_red", "msg_purple", "msg_blue", "msg_green"]
         self.logger_events_color = {
             "msg": ("white", "black"),
             "msg_red": ("white", "red"),
             "msg_purple": ("white", "purple"),
             "msg_blue": ("white", "blue"),
+            "msg_green": ("white", "green"),
         }
         self.frame_resolutions = {
             "160x120": (160, 120),
@@ -57,7 +58,7 @@ class Gui:
                     self.window["-STOP_BOT-"].update(disabled=True)
                     self.window["-SELECT_MOBS-"].update(disabled=False)
             if event == "-START_BOT-":
-                bot.start(self.window)
+                bot.start()
                 self.window["-START_BOT-"].update(disabled=True)
                 self.window["-STOP_BOT-"].update(disabled=False)
                 self.window["-SELECT_MOBS-"].update(disabled=True)
@@ -153,7 +154,8 @@ class Gui:
 
             # MOBS - Mobs configuration
             if event == "-SELECT_MOBS-":
-                self.__select_mobs_popup()
+                selected_mobs = self.__select_mobs_popup(bot.get_all_mobs())
+                bot.set_config(selected_mobs=selected_mobs)
 
             # VIDEO - Bot's Vision
             if values["-SHOW_FRAMES-"]:
@@ -427,47 +429,7 @@ class Gui:
                 popup_window.close()
                 return values["-DROP-"], handlers[values["-DROP-"]]
 
-    def __select_mobs_popup(self, all_mob=[], selected_mobs=[]):
-        all_mobs = [
-            {
-                "name": "batto",
-                "element": "wind",
-                "map_name": "flaris",
-            },
-            {
-                "name": "carvi",
-                "element": "fire",
-                "map_name": "flaris",
-            },
-            {
-                "name": "castor",
-                "element": "soil",
-                "map_name": "darkon",
-            },
-            {
-                "name": "ketiri",
-                "element": "eletricity",
-                "map_name": "darkon",
-            },
-            {
-                "name": "kretan",
-                "element": "eletricity",
-                "map_name": "saint morning",
-            },
-        ]
-        selected_mobs = [
-            {
-                "name": "batto",
-                "element": "wind",
-                "map_name": "flaris",
-            },
-            {
-                "name": "ketiri",
-                "element": "eletricity",
-                "map_name": "darkon",
-            },
-        ]
-
+    def __select_mobs_popup(self, all_mobs, selected_mobs=[]):
         all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in all_mobs]
         selected_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in selected_mobs]
         selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in selected_mobs_titles]
@@ -495,7 +457,7 @@ class Gui:
 
             if event == sg.WIN_CLOSED:
                 popup_window.close()
-                return None
+                return []
 
             if values["-MOBS_SEARCH-"] != "":
                 search = values["-MOBS_SEARCH-"]
@@ -508,8 +470,9 @@ class Gui:
                 selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
                 popup_window["-MOBS_LIST-"].update(set_to_index=selected_mobs_indexes)
 
+            if event == "Reset":
+                popup_window["-MOBS_LIST-"].update(set_to_index=[])
             if event == "OK":
                 popup_window.close()
                 return [all_mobs[i] for i in selected_mobs_indexes]
-            if event == "Reset":
-                popup_window["-MOBS_LIST-"].update(set_to_index=[])
+

@@ -34,9 +34,11 @@ class Bot:
             "fight_time_limit_sec": 8,
             "delay_to_check_mob_still_alive_sec": 0.25,
             "convert_penya_to_perins_timer_min": 30,
+            "selected_mobs": [],
         }
         self.current_mob = None
-        
+
+        self.gui_window = None
         self.frame = None
         self.debug_frame = None
         self.__farm_thread_running = False
@@ -47,16 +49,17 @@ class Bot:
         )
 
     def setup(self, window_handler, gui_window):
+        self.gui_window = gui_window
         self.voice_engine = pyttsx3.init()
         self.wincap = WindowCapture(window_handler)
         self.mouse = HumanMouse(window_handler, self.wincap.get_screen_pos)
         self.keyboard = HumanKeyboard(window_handler)
-        self.all_mobs = MobInfo.get_all_mobs()
-        Thread(target=self.__frame_thread, args=(gui_window,), daemon=True).start()
+        Thread(target=self.__frame_thread, daemon=True).start()
+        gui_window.write_event_value("msg_green", "Bot is ready.")
 
-    def start(self, gui_window):
+    def start(self):
         self.__farm_thread_running = True
-        Thread(target=self.__farm_thread, args=(gui_window,), daemon=True).start()
+        Thread(target=self.__farm_thread, daemon=True).start()
 
     def stop(self):
         self.__farm_thread_running = False
@@ -91,16 +94,21 @@ class Bot:
                 The delay to check if the mob is still alive when it's fighting. Unity in seconds. Default: 0.25
             convert_penya_to_perins_timer_min: int
                 The time to convert the penya to perins. Unity in minutes. Default: 30
+            selected_mobs: list
+                The list of mobs to kill. Default: []
         """
         for key, value in options.items():
             self.config[key] = value
 
         self.__update_timer_configs()
 
+    def get_all_mobs(self):
+        return MobInfo.get_all_mobs()
+
     def __update_timer_configs(self):
         self.convert_penya_to_perins_timer.wait_seconds = self.config["convert_penya_to_perins_timer_min"] * 60
 
-    def __frame_thread(self, gui_window):
+    def __frame_thread(self):
         current_mob_info_index = 0
         fps_circular_buffer = collections.deque(maxlen=10)
         loop_time = time()
@@ -110,16 +118,16 @@ class Bot:
             except:
                 emit_error(
                     _throttle_sec=15,
-                    gui_window=gui_window,
+                    gui_window=self.gui_window,
                     msg="Error getting the frame. Check if window is visible and attach again.",
                 )
                 sleep(3)
                 continue
 
             if self.config["show_frames"]:
-                if current_mob_info_index >= (len(self.all_mobs) - 1):
+                if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
                     current_mob_info_index = 0
-                self.current_mob = self.all_mobs[current_mob_info_index]
+                self.current_mob = self.config["selected_mobs"][current_mob_info_index]
                 matches = self.__get_mobs_position(debug=True)
                 self.__check_mob_existence(debug=True)
                 self.__check_mob_still_alive(debug=True)
@@ -132,11 +140,11 @@ class Bot:
             fps_circular_buffer.append(time() - loop_time)
             fps = round(1 / (sum(fps_circular_buffer) / len(fps_circular_buffer)))
 
-            gui_window.write_event_value("debug_frame", self.debug_frame)
-            gui_window.write_event_value("video_fps", f"Video FPS: {fps}")
+            self.gui_window.write_event_value("debug_frame", self.debug_frame)
+            self.gui_window.write_event_value("video_fps", f"Video FPS: {fps}")
             loop_time = time()
 
-    def __farm_thread(self, gui_window):
+    def __farm_thread(self):
         start_countdown(self.voice_engine, 3)
         current_mob_info_index = 0
         mobs_killed = 0
@@ -144,9 +152,9 @@ class Bot:
         while True:
             self.convert_penya_to_perins_timer()
 
-            if current_mob_info_index >= (len(self.all_mobs) - 1):
+            if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
                 current_mob_info_index = 0
-            self.current_mob = self.all_mobs[current_mob_info_index]
+            self.current_mob = self.config["selected_mobs"][current_mob_info_index]
             matches = self.__get_mobs_position()
 
             if matches:
@@ -154,7 +162,7 @@ class Bot:
             else:
                 # TODO: Turn around and check for mobs first before changing the current mob
                 current_mob_info_index += 1
-                if current_mob_info_index >= (len(self.all_mobs) - 1):
+                if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
                     self.__mobs_not_available_on_screen()
                 else:
                     pass
@@ -164,9 +172,9 @@ class Bot:
                 break
 
             if self.config["show_frames"]:
-                gui_window.write_event_value("debug_frame", self.debug_frame)
+                self.gui_window.write_event_value("debug_frame", self.debug_frame)
 
-            # gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
+            # self.gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
 
             if not self.__farm_thread_running:
                 break
