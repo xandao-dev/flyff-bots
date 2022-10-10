@@ -432,44 +432,44 @@ class Gui:
             {
                 "name": "batto",
                 "element": "wind",
-                "location": "flaris",
+                "map_name": "flaris",
             },
             {
                 "name": "carvi",
                 "element": "fire",
-                "location": "flaris",
+                "map_name": "flaris",
             },
             {
                 "name": "castor",
                 "element": "soil",
-                "location": "darkon",
+                "map_name": "darkon",
             },
             {
                 "name": "ketiri",
                 "element": "eletricity",
-                "location": "darkon",
+                "map_name": "darkon",
             },
             {
                 "name": "kretan",
                 "element": "eletricity",
-                "location": "saint morning",
+                "map_name": "saint morning",
             },
         ]
         selected_mobs = [
             {
                 "name": "batto",
                 "element": "wind",
-                "location": "flaris",
+                "map_name": "flaris",
             },
             {
                 "name": "ketiri",
                 "element": "eletricity",
-                "location": "darkon",
+                "map_name": "darkon",
             },
         ]
 
-        all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['location']}" for mob in all_mobs]
-        selected_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['location']}" for mob in selected_mobs]
+        all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in all_mobs]
+        selected_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in selected_mobs]
         selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in selected_mobs_titles]
 
         popup_window = sg.Window(

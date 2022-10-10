@@ -34,23 +34,76 @@ class MobType:
 
 
 class MobInfo:
-    """
-    MOB_NAME = (MOB NAME CV IMAGE, MOB TYPE CV IMAGE, HEIGHT_OFFSET)
-    """
-
-    ROSPOSA = (cv.imread(mob_rosposa_water_path, cv.IMREAD_GRAYSCALE), MobType.WATER, 80)
-    KINGYO = (cv.imread(mob_kingyo_water_path, cv.IMREAD_GRAYSCALE), MobType.WATER, 80)
-    DLAKAV = (cv.imread(mob_dlakav_water_path, cv.IMREAD_GRAYSCALE), MobType.WATER, 80)
-    BATTO = (cv.imread(mob_batto_wind_path, cv.IMREAD_GRAYSCALE), MobType.WIND, 125)
-    CASTOR = (cv.imread(mob_castor_soil_path, cv.IMREAD_GRAYSCALE), MobType.SOIL, 80)
-    KRETAN = (cv.imread(mob_kretan_soil_path, cv.IMREAD_GRAYSCALE), MobType.SOIL, 80)
-    WORUN = (cv.imread(mob_worun_soil_path, cv.IMREAD_GRAYSCALE), MobType.SOIL, 80)
-    OSETI = (cv.imread(mob_oseti_electricity_path, cv.IMREAD_GRAYSCALE), MobType.ELECTRICITY, 80)
-    CARVI = (cv.imread(mob_carvi_fire_path, cv.IMREAD_GRAYSCALE), MobType.FIRE, 80)
-    NYAMULI = (cv.imread(mob_nyamuli_fire_path, cv.IMREAD_GRAYSCALE), MobType.FIRE, 80)
-
-    def __init__(self):
-        pass
+    ROSPOSA = {
+        "name": "rosposa",
+        "element": MobType.WATER,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_rosposa_water_path, cv.IMREAD_GRAYSCALE),
+    }
+    KINGYO = {
+        "name": "kingyo",
+        "element": MobType.WATER,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_kingyo_water_path, cv.IMREAD_GRAYSCALE),
+    }
+    DLAKAV = {
+        "name": "dlakav",
+        "element": MobType.WATER,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_dlakav_water_path, cv.IMREAD_GRAYSCALE),
+    }
+    BATTO = {
+        "name": "batto",
+        "element": MobType.WIND,
+        "map_name": "Neo Cascada",
+        "height_offset": 125,
+        "image": cv.imread(mob_batto_wind_path, cv.IMREAD_GRAYSCALE),
+    }
+    CASTOR = {
+        "name": "castor",
+        "element": MobType.SOIL,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_castor_soil_path, cv.IMREAD_GRAYSCALE),
+    }
+    KRETAN = {
+        "name": "kretan",
+        "element": MobType.SOIL,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_kretan_soil_path, cv.IMREAD_GRAYSCALE),
+    }
+    WORUN = {
+        "name": "worun",
+        "element": MobType.SOIL,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_worun_soil_path, cv.IMREAD_GRAYSCALE),
+    }
+    OSETI = {
+        "name": "oseti",
+        "element": MobType.ELECTRICITY,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_oseti_electricity_path, cv.IMREAD_GRAYSCALE),
+    }
+    CARVI = {
+        "name": "carvi",
+        "element": MobType.FIRE,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_carvi_fire_path, cv.IMREAD_GRAYSCALE),
+    }
+    NYAMULI =  {
+        "name": "nyamuli",
+        "element": MobType.FIRE,
+        "map_name": "Neo Cascada",
+        "height_offset": 80,
+        "image": cv.imread(mob_nyamuli_fire_path, cv.IMREAD_GRAYSCALE),
+    }
 
     @staticmethod
     def get_all_mobs():

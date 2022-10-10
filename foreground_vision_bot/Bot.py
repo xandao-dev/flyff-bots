@@ -35,14 +35,11 @@ class Bot:
             "delay_to_check_mob_still_alive_sec": 0.25,
             "convert_penya_to_perins_timer_min": 30,
         }
-
+        self.current_mob = None
+        
         self.frame = None
         self.debug_frame = None
         self.__farm_thread_running = False
-
-        self.current_mob = None
-        self.current_mob_type = None
-        self.current_mob_offset = None
 
         # Synced Timers
         self.convert_penya_to_perins_timer = SyncedTimer(
@@ -122,11 +119,10 @@ class Bot:
             if self.config["show_frames"]:
                 if current_mob_info_index >= (len(self.all_mobs) - 1):
                     current_mob_info_index = 0
-                self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
-
-                matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset, debug=True)
+                self.current_mob = self.all_mobs[current_mob_info_index]
+                matches = self.__get_mobs_position(debug=True)
                 self.__check_mob_existence(debug=True)
-                self.__check_mob_still_alive(self.current_mob_type, debug=True)
+                self.__check_mob_still_alive(debug=True)
                 self.__check_inventory_open(debug=True)
                 self.__get_perin_converter_pos_if_available(debug=True)
 
@@ -150,11 +146,11 @@ class Bot:
 
             if current_mob_info_index >= (len(self.all_mobs) - 1):
                 current_mob_info_index = 0
-            self.current_mob, self.current_mob_type, self.current_mob_offset = self.all_mobs[current_mob_info_index]
-            matches = self.__get_mobs_position(self.current_mob, self.current_mob_offset)
+            self.current_mob = self.all_mobs[current_mob_info_index]
+            matches = self.__get_mobs_position()
 
             if matches:
-                mobs_killed = self.__mobs_available_on_screen(self.current_mob_type, matches, mobs_killed)
+                mobs_killed = self.__mobs_available_on_screen(matches, mobs_killed)
             else:
                 # TODO: Turn around and check for mobs first before changing the current mob
                 current_mob_info_index += 1
@@ -175,7 +171,7 @@ class Bot:
             if not self.__farm_thread_running:
                 break
 
-    def __mobs_available_on_screen(self, mob_type_cv, points, mobs_killed):
+    def __mobs_available_on_screen(self, points, mobs_killed):
         frame_w = self.frame.shape[1]
         frame_h = self.frame.shape[0]
         frame_center = (frame_w // 2, frame_h // 2)
@@ -189,7 +185,7 @@ class Bot:
             self.mouse.move_outside_game(duration=0.2)
             fight_time = time()
             while True:
-                if not self.__check_mob_still_alive(mob_type_cv):
+                if not self.__check_mob_still_alive():
                     monsters_count += 1
                     break
                 else:
@@ -248,17 +244,17 @@ class Bot:
 
     """Match Methods"""
 
-    def __get_mobs_position(self, mob_name_cv, mob_height_offset, debug=False):
-        if mob_name_cv is None or mob_height_offset is None:
+    def __get_mobs_position(self, debug=False):
+        if self.current_mob["image"] is None or self.current_mob["height_offset"] is None:
             return []
 
         # frame_cute_area 50px from each side of the frame to avoid some UI elements
         matches, drawn_frame = CV.match_template_multi(
             frame=self.frame,
             crop_area=(50, -50, 50, -50),
-            template=mob_name_cv,
+            template=self.current_mob["image"],
             threshold=self.config["mob_pos_match_threshold"],
-            box_offset=(0, mob_height_offset),
+            box_offset=(0, self.current_mob["height_offset"]),
             frame_to_draw=self.debug_frame if debug else None,
             draw_rect=self.config["show_mobs_pos_boxes"],
             draw_marker=self.config["show_mobs_pos_markers"],
@@ -270,7 +266,7 @@ class Bot:
         # print("Mobs positions: ", matches)
         return matches
 
-    def __check_mob_still_alive(self, mob_type_cv, debug=False):
+    def __check_mob_still_alive(self, debug=False):
         """
         Check if the mob is still alive by checking if the mob type icon is still visible.
         We can't use mob life bar because it changes when the mob is hit.
@@ -279,7 +275,7 @@ class Bot:
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             crop_area=(0, 50, 200, -200),
-            template=mob_type_cv,
+            template=self.current_mob["element"],
             threshold=self.config["mob_still_alive_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Mob still alive" if debug and self.config["show_matches_text"] else None,
