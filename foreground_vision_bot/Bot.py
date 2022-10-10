@@ -125,7 +125,7 @@ class Bot:
                 continue
 
             if self.config["show_frames"]:
-                if (len(self.config["selected_mobs"]) > 0):
+                if len(self.config["selected_mobs"]) > 0:
                     if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
                         current_mob_info_index = 0
                     self.current_mob = self.config["selected_mobs"][current_mob_info_index]
@@ -134,7 +134,7 @@ class Bot:
                     self.__check_mob_still_alive(debug=True)
                     if not matches:
                         current_mob_info_index += 1
-            
+
                 self.__check_inventory_open(debug=True)
                 self.__get_perin_converter_pos_if_available(debug=True)
 
@@ -151,12 +151,11 @@ class Bot:
         mobs_killed = 0
 
         while True:
-            if (len(self.config["selected_mobs"]) > 0):
+            if len(self.config["selected_mobs"]) > 0:
                 continue
 
             self.convert_penya_to_perins_timer()
 
-            
             if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
                 current_mob_info_index = 0
             self.current_mob = self.config["selected_mobs"][current_mob_info_index]
@@ -258,14 +257,14 @@ class Bot:
     """Match Methods"""
 
     def __get_mobs_position(self, debug=False):
-        if self.current_mob["image"] is None or self.current_mob["height_offset"] is None:
+        if self.current_mob["name_img"] is None or self.current_mob["height_offset"] is None:
             return []
 
         # frame_cute_area 50px from each side of the frame to avoid some UI elements
         matches, drawn_frame = CV.match_template_multi(
             frame=self.frame,
             crop_area=(50, -50, 50, -50),
-            template=self.current_mob["image"],
+            template=self.current_mob["name_img"],
             threshold=self.config["mob_pos_match_threshold"],
             box_offset=(0, self.current_mob["height_offset"]),
             frame_to_draw=self.debug_frame if debug else None,
@@ -288,7 +287,7 @@ class Bot:
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             crop_area=(0, 50, 200, -200),
-            template=self.current_mob["element"],
+            template=self.current_mob["element_img"],
             threshold=self.config["mob_still_alive_match_threshold"],
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Mob still alive" if debug and self.config["show_matches_text"] else None,

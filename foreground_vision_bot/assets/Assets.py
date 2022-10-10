@@ -36,78 +36,98 @@ class MobType:
 class MobInfo:
     ROSPOSA = {
         "name": "rosposa",
-        "element": MobType.WATER,
+        "element": "water",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_rosposa_water_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_rosposa_water_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.WATER,
     }
     KINGYO = {
         "name": "kingyo",
-        "element": MobType.WATER,
+        "element": "water",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_kingyo_water_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_kingyo_water_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.WATER,
     }
     DLAKAV = {
         "name": "dlakav",
-        "element": MobType.WATER,
+        "element": "water",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_dlakav_water_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_dlakav_water_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.WATER,
     }
     BATTO = {
         "name": "batto",
-        "element": MobType.WIND,
+        "element": "wind",
         "map_name": "Neo Cascada",
         "height_offset": 125,
-        "image": cv.imread(mob_batto_wind_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_batto_wind_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.WIND,
     }
     CASTOR = {
         "name": "castor",
-        "element": MobType.SOIL,
+        "element": "soil",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_castor_soil_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_castor_soil_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.SOIL,
     }
     KRETAN = {
         "name": "kretan",
-        "element": MobType.SOIL,
+        "element": "soil",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_kretan_soil_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_kretan_soil_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.SOIL,
     }
     WORUN = {
         "name": "worun",
-        "element": MobType.SOIL,
+        "element": "soil",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_worun_soil_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_worun_soil_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.SOIL,
     }
     OSETI = {
         "name": "oseti",
-        "element": MobType.ELECTRICITY,
+        "element": "electricity",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_oseti_electricity_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_oseti_electricity_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.ELECTRICITY,
     }
     CARVI = {
         "name": "carvi",
-        "element": MobType.FIRE,
+        "element": "fire",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_carvi_fire_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_carvi_fire_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.FIRE,
     }
-    NYAMULI =  {
+    NYAMULI = {
         "name": "nyamuli",
-        "element": MobType.FIRE,
+        "element": "fire",
         "map_name": "Neo Cascada",
         "height_offset": 80,
-        "image": cv.imread(mob_nyamuli_fire_path, cv.IMREAD_GRAYSCALE),
+        "name_img": cv.imread(mob_nyamuli_fire_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.FIRE,
     }
 
     @staticmethod
     def get_all_mobs():
-        return [getattr(MobInfo, attr) for attr in dir(MobInfo) if not attr.startswith("__")]
+        """
+        Get a list of all mobs registered. Using a approach of getting all 
+        attributes of the class, and filtering the internal class attributes.
+
+        :return: list of all mobs
+        """
+        return [
+            getattr(MobInfo, attr)
+            for attr in dir(MobInfo)
+            if not attr.startswith("__") and not callable(getattr(MobInfo, attr))
+        ]
 
 
 class GeneralAssets:

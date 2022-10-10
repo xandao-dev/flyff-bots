@@ -154,7 +154,8 @@ class Gui:
 
             # MOBS - Mobs configuration
             if event == "-SELECT_MOBS-":
-                selected_mobs = self.__select_mobs_popup(bot.get_all_mobs())
+                all_mobs = bot.get_all_mobs()
+                selected_mobs = self.__select_mobs_popup(all_mobs)
                 bot.set_config(selected_mobs=selected_mobs)
 
             # VIDEO - Bot's Vision
@@ -475,4 +476,3 @@ class Gui:
             if event == "OK":
                 popup_window.close()
                 return [all_mobs[i] for i in selected_mobs_indexes]
-
