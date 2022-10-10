@@ -125,17 +125,18 @@ class Bot:
                 continue
 
             if self.config["show_frames"]:
-                if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
-                    current_mob_info_index = 0
-                self.current_mob = self.config["selected_mobs"][current_mob_info_index]
-                matches = self.__get_mobs_position(debug=True)
-                self.__check_mob_existence(debug=True)
-                self.__check_mob_still_alive(debug=True)
+                if (len(self.config["selected_mobs"]) > 0):
+                    if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
+                        current_mob_info_index = 0
+                    self.current_mob = self.config["selected_mobs"][current_mob_info_index]
+                    matches = self.__get_mobs_position(debug=True)
+                    self.__check_mob_existence(debug=True)
+                    self.__check_mob_still_alive(debug=True)
+                    if not matches:
+                        current_mob_info_index += 1
+            
                 self.__check_inventory_open(debug=True)
                 self.__get_perin_converter_pos_if_available(debug=True)
-
-                if not matches:
-                    current_mob_info_index += 1
 
             fps_circular_buffer.append(time() - loop_time)
             fps = round(1 / (sum(fps_circular_buffer) / len(fps_circular_buffer)))
@@ -150,8 +151,12 @@ class Bot:
         mobs_killed = 0
 
         while True:
+            if (len(self.config["selected_mobs"]) > 0):
+                continue
+
             self.convert_penya_to_perins_timer()
 
+            
             if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
                 current_mob_info_index = 0
             self.current_mob = self.config["selected_mobs"][current_mob_info_index]
