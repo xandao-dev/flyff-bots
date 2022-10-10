@@ -41,16 +41,40 @@ class Gui:
         while True:
             event, values = self.window.read(timeout=1000)
 
+            # ACTIONS - Button events
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
+            if event == "-ATTACH_WINDOW-":
+                game_window_name, game_window_handler = self.__attach_window_popup()
+                if game_window_name and game_window_handler:
+                    bot.stop()
+                    bot.setup(game_window_handler, self.window)
+                    truncated_game_window_name = (
+                        game_window_name[:30] + "..." if len(game_window_name) > 30 else game_window_name
+                    )
+                    self.window["-ATTACHED_WINDOW-"].update(truncated_game_window_name)
+                    self.window["-START_BOT-"].update(disabled=False)
+                    self.window["-STOP_BOT-"].update(disabled=True)
+                    self.window["-SELECT_MOBS-"].update(disabled=False)
+            if event == "-START_BOT-":
+                bot.start(self.window)
+                self.window["-START_BOT-"].update(disabled=True)
+                self.window["-STOP_BOT-"].update(disabled=False)
+                self.window["-SELECT_MOBS-"].update(disabled=True)
+            if event == "-STOP_BOT-":
+                bot.stop()
+                self.window["-START_BOT-"].update(disabled=False)
+                self.window["-STOP_BOT-"].update(disabled=True)
+                self.window["-SELECT_MOBS-"].update(disabled=False)
 
+            # BOT OPTIONS - Video options
             if event == "-SHOW_FRAMES-":
                 bot.set_config(show_frames=values["-SHOW_FRAMES-"])
                 self.window["-SHOW_MATCHES_TEXT-"].update(visible=(values["-SHOW_FRAMES-"]))
                 self.window["-SHOW_BOXES-"].update(visible=(values["-SHOW_FRAMES-"]))
                 self.window["-SHOW_MARKERS-"].update(visible=(values["-SHOW_FRAMES-"]))
                 self.window["-VISION_FRAME-"].update(visible=(values["-SHOW_FRAMES-"]))
-                self.window.refresh() # Combined with contents_changed, will compute the new size of the element
+                self.window.refresh()  # Combined with contents_changed, will compute the new size of the element
                 self.window["-MAIN_COLUMN-"].contents_changed()
             if event == "-SHOW_BOXES-":
                 bot.set_config(show_mobs_pos_boxes=values["-SHOW_BOXES-"])
@@ -59,7 +83,7 @@ class Gui:
             if event == "-SHOW_MATCHES_TEXT-":
                 bot.set_config(show_matches_text=values["-SHOW_MATCHES_TEXT-"])
 
-            # BOT OPTIONS THRESHOLD
+            # BOT OPTIONS - Threshold options
             if event.startswith("-BOT_THRESHOLD_OPTIONS-"):
                 self.window["-BOT_THRESHOLD_OPTIONS-"].update(
                     visible=not self.window["-BOT_THRESHOLD_OPTIONS-"].visible
@@ -69,7 +93,7 @@ class Gui:
                     if self.window["-BOT_THRESHOLD_OPTIONS-"].visible
                     else self.window["-BOT_THRESHOLD_OPTIONS-"].metadata[1]
                 )
-                self.window.refresh() # Combined with contents_changed, will compute the new size of the element
+                self.window.refresh()  # Combined with contents_changed, will compute the new size of the element
                 self.window["-MAIN_COLUMN-"].contents_changed()
             if event == "-MOB_POS_MATCH_THRESHOLD-":
                 bot.set_config(mob_pos_match_threshold=values["-MOB_POS_MATCH_THRESHOLD-"])
@@ -83,6 +107,8 @@ class Gui:
                 )
             if event == "-INVENTORY_ICONS_MATCH_THRESHOLD-":
                 bot.set_config(inventory_icons_match_threshold=values["-INVENTORY_ICONS_MATCH_THRESHOLD-"])
+
+            # BOT OPTIONS - General options
             if event == "-MOBS_KILL_GOAL-":
                 if ["infinity", "inf", "0", ""] in values["-MOBS_KILL_GOAL-"].lower():
                     bot.set_config(mobs_kill_goal=None)
@@ -125,29 +151,9 @@ class Gui:
             if event == "video_fps":
                 self.window["-VIDEO_FPS-"].update(values["video_fps"])
 
-            # ACTIONS - Button events
-            if event == "-ATTACH_WINDOW-":
-                game_window_name, game_window_handler = self.__attach_window_popup()
-                if game_window_name and game_window_handler:
-                    bot.stop()
-                    bot.setup(game_window_handler, self.window)
-                    truncated_game_window_name = (
-                        game_window_name[:30] + "..." if len(game_window_name) > 30 else game_window_name
-                    )
-                    self.window["-ATTACHED_WINDOW-"].update(truncated_game_window_name)
-                    self.window["-START_BOT-"].update(disabled=False)
-                    self.window["-STOP_BOT-"].update(disabled=True)
-                    self.window["-SELECT_MOBS-"].update(disabled=False)
-            if event == "-START_BOT-":
-                bot.start(self.window)
-                self.window["-START_BOT-"].update(disabled=True)
-                self.window["-STOP_BOT-"].update(disabled=False)
-                self.window["-SELECT_MOBS-"].update(disabled=True)
-            if event == "-STOP_BOT-":
-                bot.stop()
-                self.window["-START_BOT-"].update(disabled=False)
-                self.window["-STOP_BOT-"].update(disabled=True)
-                self.window["-SELECT_MOBS-"].update(disabled=False)
+            # MOBS - Mobs configuration
+            if event == "-SELECT_MOBS-":
+                self.__select_mobs_popup()
 
             # VIDEO - Bot's Vision
             if values["-SHOW_FRAMES-"]:
@@ -421,16 +427,65 @@ class Gui:
                 popup_window.close()
                 return values["-DROP-"], handlers[values["-DROP-"]]
 
-    def __select_mobs_popup(self, all_mobs, selected_mobs):
-        mobs = ["batto", "carvi", "castor", "cetiri", "kretan"]  # all_mobs
-        selected_mobs = ["batto", "carvi"]  # selected_mobs
+    def __select_mobs_popup(self, all_mob=[], selected_mobs=[]):
+        all_mobs = [
+            {
+                "name": "batto",
+                "element": "wind",
+                "location": "flaris",
+            },
+            {
+                "name": "carvi",
+                "element": "fire",
+                "location": "flaris",
+            },
+            {
+                "name": "castor",
+                "element": "soil",
+                "location": "darkon",
+            },
+            {
+                "name": "ketiri",
+                "element": "eletricity",
+                "location": "darkon",
+            },
+            {
+                "name": "kretan",
+                "element": "eletricity",
+                "location": "saint morning",
+            },
+        ]
+        selected_mobs = [
+            {
+                "name": "batto",
+                "element": "wind",
+                "location": "flaris",
+            },
+            {
+                "name": "ketiri",
+                "element": "eletricity",
+                "location": "darkon",
+            },
+        ]
+
+        all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['location']}" for mob in all_mobs]
+        selected_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['location']}" for mob in selected_mobs]
+        selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in selected_mobs_titles]
 
         popup_window = sg.Window(
             "Select Mobs",
             [
                 [sg.Text("Please select the mobs to kill:")],
-                [[sg.Text("Search: ")], [sg.Input(size=(20, 1), enable_events=True, key="-MOBS_SEARCH-")]][
-                    sg.Listbox(values=mobs, size=(20, 10), key="-MOBS-")
+                [[sg.Text("Search: ")], [sg.Input(enable_events=True, expand_x=True, key="-MOBS_SEARCH-")]],
+                [
+                    sg.Listbox(
+                        values=all_mobs_titles,
+                        default_values=selected_mobs_titles,
+                        size=(60, 10),
+                        enable_events=True,
+                        select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                        key="-MOBS_LIST-",
+                    )
                 ],
                 [sg.Button("Reset"), sg.OK()],
             ],
@@ -438,20 +493,23 @@ class Gui:
         while True:
             event, values = popup_window.read()
 
+            if event == sg.WIN_CLOSED:
+                popup_window.close()
+                return None
+
             if values["-MOBS_SEARCH-"] != "":
                 search = values["-MOBS_SEARCH-"]
-                filtered_mobs = [x for x in mobs if search in x]
-                popup_window["-MOBS-"].update(filtered_mobs)
+                filtered_mobs = [x for x in all_mobs_titles if search in x]
+                popup_window["-MOBS_LIST-"].update(filtered_mobs)
             else:
-                popup_window["-MOBS-"].update(mobs)
+                popup_window["-MOBS_LIST-"].update(all_mobs_titles)
 
-            if event == "-MOBS-" and len(values["-MOBS-"]):
-                # selected_mobs.append(values['-MOBS-'][0])
-                sg.popup("Selected ", values["-MOBS-"])
+            if event == "-MOBS_LIST-" and len(values["-MOBS_LIST-"]):
+                selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
+                popup_window["-MOBS_LIST-"].update(set_to_index=selected_mobs_indexes)
 
-            if event in (sg.WIN_CLOSED, "OK"):
+            if event == "OK":
                 popup_window.close()
-                return values["-MOBS-"]
+                return [all_mobs[i] for i in selected_mobs_indexes]
             if event == "Reset":
-                # FIXME - reset listbox
-                popup_window["-MOBS-"].update(values=list(self.mobs.keys()))
+                popup_window["-MOBS_LIST-"].update(set_to_index=[])
