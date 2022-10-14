@@ -141,11 +141,10 @@ class Bot:
 
                 self.__check_inventory_open(debug=True)
                 self.__get_perin_converter_pos_if_available(debug=True)
+                self.gui_window.write_event_value("debug_frame", self.debug_frame)
 
             fps_circular_buffer.append(time() - loop_time)
             fps = round(1 / (sum(fps_circular_buffer) / len(fps_circular_buffer)))
-
-            self.gui_window.write_event_value("debug_frame", self.debug_frame)
             self.gui_window.write_event_value("video_fps", f"Video FPS: {fps}")
             loop_time = time()
 
