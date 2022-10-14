@@ -154,7 +154,7 @@ class Bot:
         mobs_killed = 0
 
         while True:
-            if len(self.config["selected_mobs"]) > 0:
+            if not len(self.config["selected_mobs"]) > 0:
                 continue
 
             self.convert_penya_to_perins_timer()
