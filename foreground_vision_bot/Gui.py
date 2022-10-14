@@ -2,11 +2,11 @@ import difflib
 
 import cv2 as cv
 import PySimpleGUI as sg
-from utils.helpers import get_window_handlers
+from utils.helpers import get_window_handlers, hex_variant
 
 
 class Gui:
-    def __init__(self):
+    def __init__(self, theme="DarkAmber"):
         self.logger_events = ["msg", "msg_red", "msg_purple", "msg_blue", "msg_green"]
         self.logger_events_color = {
             "msg": ("white", "black"),
@@ -30,7 +30,7 @@ class Gui:
             "1280x1024": (1280, 1024),
             "1366x768": (1366, 768),
         }
-        sg.theme("DarkAmber") # Fixed theme, because we manipulate its color in listbox
+        sg.theme(theme)
 
     def init(self):
         layout = self.__get_layout()
@@ -435,7 +435,6 @@ class Gui:
         all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in all_mobs]
         selected_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in selected_mobs]
         selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in selected_mobs_titles]
-
         last_highlighted_mob = None
 
         popup_window = sg.Window(
@@ -468,16 +467,16 @@ class Gui:
                 search = values["-MOBS_SEARCH-"]
                 best_match = difflib.get_close_matches(search, all_mobs_titles, n=1, cutoff=0.0)
                 if last_highlighted_mob is not None:
-                    listbox.Widget.itemconfigure(last_highlighted_mob, bg='#705e52') # Default DarkAmber input bg color
+                    listbox.Widget.itemconfigure(last_highlighted_mob, bg=listbox.BackgroundColor)
                     last_highlighted_mob = None
                 if len(best_match) > 0:
                     best_match_index = all_mobs_titles.index(best_match[0])
-                    listbox.Widget.itemconfigure(best_match_index, bg='#594b41') # Bg color 20% darker than DarkAmber default
+                    listbox.Widget.itemconfigure(best_match_index, bg=hex_variant(listbox.BackgroundColor, -20))
                     listbox.update(scroll_to_index=best_match_index)
                     last_highlighted_mob = best_match_index
             else:
                 if last_highlighted_mob is not None:
-                    listbox.Widget.itemconfigure(last_highlighted_mob, bg='#705e52') # Default DarkAmber input bg color
+                    listbox.Widget.itemconfigure(last_highlighted_mob, bg=listbox.BackgroundColor)
                     last_highlighted_mob = None
 
             if event == "-MOBS_LIST-" and len(values["-MOBS_LIST-"]):

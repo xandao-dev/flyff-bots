@@ -1,16 +1,16 @@
-from time import sleep, time
-from threading import Thread
 import collections
-import pyttsx3
+from threading import Thread
+from time import sleep, time
 
+import pyttsx3
 from assets.Assets import GeneralAssets, MobInfo
-from utils.decorators import throttle
-from utils.helpers import start_countdown, get_point_near_center
-from utils.SyncedTimer import SyncedTimer
+from libs.ComputerVision import ComputerVision as CV
 from libs.human_mouse.HumanMouse import HumanMouse
 from libs.HumanKeyboard import VKEY, HumanKeyboard
 from libs.WindowCapture import WindowCapture
-from libs.ComputerVision import ComputerVision as CV
+from utils.decorators import throttle
+from utils.helpers import get_point_near_center, start_countdown
+from utils.SyncedTimer import SyncedTimer
 
 
 @throttle()

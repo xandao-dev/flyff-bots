@@ -8,7 +8,7 @@ from Gui import Gui
 from utils.helpers import print_logo
 
 # Instances
-gui = Gui()
+gui = Gui("DarkAmber")
 bot = Bot()
 
 
