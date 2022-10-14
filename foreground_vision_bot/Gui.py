@@ -1,11 +1,12 @@
-import PySimpleGUI as sg
-import cv2 as cv
+import difflib
 
+import cv2 as cv
+import PySimpleGUI as sg
 from utils.helpers import get_window_handlers
 
 
 class Gui:
-    def __init__(self, theme="DarkAmber"):
+    def __init__(self):
         self.logger_events = ["msg", "msg_red", "msg_purple", "msg_blue", "msg_green"]
         self.logger_events_color = {
             "msg": ("white", "black"),
@@ -29,7 +30,7 @@ class Gui:
             "1280x1024": (1280, 1024),
             "1366x768": (1366, 768),
         }
-        sg.theme(theme)
+        sg.theme("DarkAmber") # Fixed theme, because we manipulate its color in listbox
 
     def init(self):
         layout = self.__get_layout()
@@ -435,11 +436,13 @@ class Gui:
         selected_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in selected_mobs]
         selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in selected_mobs_titles]
 
+        last_highlighted_mob = None
+
         popup_window = sg.Window(
             "Select Mobs",
             [
                 [sg.Text("Please select the mobs to kill:")],
-                [[sg.Text("Search: ")], [sg.Input(enable_events=True, expand_x=True, key="-MOBS_SEARCH-")]],
+                [sg.Text("Find: "), sg.Input(enable_events=True, expand_x=True, key="-MOBS_SEARCH-")],
                 [
                     sg.Listbox(
                         values=all_mobs_titles,
@@ -453,26 +456,36 @@ class Gui:
                 [sg.Button("Reset"), sg.OK()],
             ],
         )
+        listbox = popup_window["-MOBS_LIST-"]
         while True:
             event, values = popup_window.read()
-
+            
             if event == sg.WIN_CLOSED:
                 popup_window.close()
                 return []
 
             if values["-MOBS_SEARCH-"] != "":
                 search = values["-MOBS_SEARCH-"]
-                filtered_mobs = [x for x in all_mobs_titles if search in x]
-                popup_window["-MOBS_LIST-"].update(filtered_mobs)
+                best_match = difflib.get_close_matches(search, all_mobs_titles, n=1, cutoff=0.0)
+                if last_highlighted_mob is not None:
+                    listbox.Widget.itemconfigure(last_highlighted_mob, bg='#705e52') # Default DarkAmber input bg color
+                    last_highlighted_mob = None
+                if len(best_match) > 0:
+                    best_match_index = all_mobs_titles.index(best_match[0])
+                    listbox.Widget.itemconfigure(best_match_index, bg='#594b41') # Bg color 20% darker than DarkAmber default
+                    listbox.update(scroll_to_index=best_match_index)
+                    last_highlighted_mob = best_match_index
             else:
-                popup_window["-MOBS_LIST-"].update(all_mobs_titles)
+                if last_highlighted_mob is not None:
+                    listbox.Widget.itemconfigure(last_highlighted_mob, bg='#705e52') # Default DarkAmber input bg color
+                    last_highlighted_mob = None
 
             if event == "-MOBS_LIST-" and len(values["-MOBS_LIST-"]):
                 selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
-                popup_window["-MOBS_LIST-"].update(set_to_index=selected_mobs_indexes)
+                listbox.update(set_to_index=selected_mobs_indexes)
 
             if event == "Reset":
-                popup_window["-MOBS_LIST-"].update(set_to_index=[])
+                listbox.update(set_to_index=[])
             if event == "OK":
                 popup_window.close()
                 return [all_mobs[i] for i in selected_mobs_indexes]
