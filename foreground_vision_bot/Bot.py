@@ -130,7 +130,7 @@ class Bot:
 
             if self.config["show_frames"]:
                 if len(self.config["selected_mobs"]) > 0:
-                    if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
+                    if current_mob_info_index > (len(self.config["selected_mobs"]) - 1):
                         current_mob_info_index = 0
                     current_mob = self.config["selected_mobs"][current_mob_info_index]
                     matches = self.__get_mobs_position(current_mob, debug=True)
@@ -160,7 +160,7 @@ class Bot:
 
             self.convert_penya_to_perins_timer()
 
-            if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
+            if current_mob_info_index > (len(self.config["selected_mobs"]) - 1):
                 current_mob_info_index = 0
             current_mob = self.config["selected_mobs"][current_mob_info_index]
             matches = self.__get_mobs_position(current_mob)
@@ -170,7 +170,7 @@ class Bot:
             else:
                 # TODO: Turn around and check for mobs first before changing the current mob
                 current_mob_info_index += 1
-                if current_mob_info_index >= (len(self.config["selected_mobs"]) - 1):
+                if current_mob_info_index > (len(self.config["selected_mobs"]) - 1):
                     self.__mobs_not_available_on_screen()
                 else:
                     pass
