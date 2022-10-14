@@ -1,3 +1,6 @@
+# Project
+*.json
+
 #VS Code configs
 .vscode
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import cv2 as cv
 
 mob_rosposa_water_path = str(Path(__file__).parent / "names" / "rosposa_water.png")

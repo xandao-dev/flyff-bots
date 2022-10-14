@@ -36,6 +36,7 @@ class Gui:
         layout = self.__get_layout()
         self.window = sg.Window("Flyff FVF", layout, location=(0, 0), resizable=True, finalize=True)
         sg.cprint_set_output_destination(self.window, "-ML-")
+        sg.user_settings_filename(path=".")
         self.__set_hotkeys()
         return self.window
 
@@ -80,10 +81,13 @@ class Gui:
                 self.window["-MAIN_COLUMN-"].contents_changed()
             if event == "-SHOW_BOXES-":
                 bot.set_config(show_mobs_pos_boxes=values["-SHOW_BOXES-"])
+                sg.user_settings_set_entry("-SHOW_BOXES-", values["-SHOW_BOXES-"])
             if event == "-SHOW_MARKERS-":
                 bot.set_config(show_mobs_pos_markers=values["-SHOW_MARKERS-"])
+                sg.user_settings_set_entry("-SHOW_MARKERS-", values["-SHOW_MARKERS-"])
             if event == "-SHOW_MATCHES_TEXT-":
                 bot.set_config(show_matches_text=values["-SHOW_MATCHES_TEXT-"])
+                sg.user_settings_set_entry("-SHOW_MATCHES_TEXT-", values["-SHOW_MATCHES_TEXT-"])
 
             # BOT OPTIONS - Threshold options
             if event.startswith("-BOT_THRESHOLD_OPTIONS-"):
@@ -99,53 +103,78 @@ class Gui:
                 self.window["-MAIN_COLUMN-"].contents_changed()
             if event == "-MOB_POS_MATCH_THRESHOLD-":
                 bot.set_config(mob_pos_match_threshold=values["-MOB_POS_MATCH_THRESHOLD-"])
+                sg.user_settings_set_entry("-MOB_POS_MATCH_THRESHOLD-", values["-MOB_POS_MATCH_THRESHOLD-"])
             if event == "-MOB_STILL_ALIVE_MATCH_THRESHOLD-":
                 bot.set_config(mob_still_alive_match_threshold=values["-MOB_STILL_ALIVE_MATCH_THRESHOLD-"])
+                sg.user_settings_set_entry(
+                    "-MOB_STILL_ALIVE_MATCH_THRESHOLD-", values["-MOB_STILL_ALIVE_MATCH_THRESHOLD-"]
+                )
             if event == "-MOB_EXISTENCE_MATCH_THRESHOLD-":
                 bot.set_config(mob_existence_match_threshold=values["-MOB_EXISTENCE_MATCH_THRESHOLD-"])
+                sg.user_settings_set_entry("-MOB_EXISTENCE_MATCH_THRESHOLD-", values["-MOB_EXISTENCE_MATCH_THRESHOLD-"])
             if event == "-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-":
                 bot.set_config(
                     inventory_perin_converter_match_threshold=values["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"]
                 )
+                sg.user_settings_set_entry(
+                    "-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-", values["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"]
+                )
             if event == "-INVENTORY_ICONS_MATCH_THRESHOLD-":
                 bot.set_config(inventory_icons_match_threshold=values["-INVENTORY_ICONS_MATCH_THRESHOLD-"])
+                sg.user_settings_set_entry(
+                    "-INVENTORY_ICONS_MATCH_THRESHOLD-", values["-INVENTORY_ICONS_MATCH_THRESHOLD-"]
+                )
 
             # BOT OPTIONS - General options
             if event == "-MOBS_KILL_GOAL-":
-                if ["infinity", "inf", "0", ""] in values["-MOBS_KILL_GOAL-"].lower():
+                if values["-MOBS_KILL_GOAL-"].lower() in ["infinite", "inf", "0", ""]:
+                    self.window["-MOBS_KILL_GOAL-"].update("infinite")
                     bot.set_config(mobs_kill_goal=None)
+                    sg.user_settings_set_entry("-MOBS_KILL_GOAL-", "infinite")
                 else:
                     try:
                         mobs_kill_goal = int(values["-MOBS_KILL_GOAL-"])
                         bot.set_config(mobs_kill_goal=mobs_kill_goal)
+                        sg.user_settings_set_entry("-MOBS_KILL_GOAL-", values["-MOBS_KILL_GOAL-"])
                     except ValueError:
                         sg.cprint("Invalid mobs kill goal")
-                        self.window["-MOBS_KILL_GOAL-"].update("infinity")
+                        self.window["-MOBS_KILL_GOAL-"].update("infinite")
                         bot.set_config(mobs_kill_goal=None)
+                        sg.user_settings_set_entry("-MOBS_KILL_GOAL-", "infinite")
             if event == "-FIGHT_TIME_LIMIT_SEC-":
                 try:
                     fight_time_limit_sec = int(values["-FIGHT_TIME_LIMIT_SEC-"])
                     bot.set_config(fight_time_limit_sec=fight_time_limit_sec)
+                    sg.user_settings_set_entry("-FIGHT_TIME_LIMIT_SEC-", values["-FIGHT_TIME_LIMIT_SEC-"])
                 except ValueError:
                     sg.cprint("Invalid fight time limit")
                     self.window["-FIGHT_TIME_LIMIT_SEC-"].update("8")
                     bot.set_config(fight_time_limit_sec=8)
+                    sg.user_settings_set_entry("-FIGHT_TIME_LIMIT_SEC-", "8")
             if event == "-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-":
                 try:
                     delay_to_check_mob_still_alive_sec = float(values["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"])
                     bot.set_config(delay_to_check_mob_still_alive_sec=delay_to_check_mob_still_alive_sec)
+                    sg.user_settings_set_entry(
+                        "-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-", values["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"]
+                    )
                 except ValueError:
                     sg.cprint("Invalid delay to check if mob is still alive")
                     self.window["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"].update("0.25")
                     bot.set_config(delay_to_check_mob_still_alive_sec=0.25)
+                    sg.user_settings_set_entry("-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-", "0.25")
             if event == "-CONVERT_PENYA_TO_PERINS_TIMER_MIN-":
                 try:
                     convert_penya_to_perins_timer_min = float(values["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"])
                     bot.set_config(convert_penya_to_perins_timer_min=convert_penya_to_perins_timer_min)
+                    sg.user_settings_set_entry(
+                        "CONVERT_PENYA_TO_PERINS_TIMER_MIN", values["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"]
+                    )
                 except ValueError:
                     sg.cprint("Invalid convert penya to perins timer, must be in minutes")
                     self.window["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"].update("30")
                     bot.set_config(convert_penya_to_perins_timer_min=30)
+                    sg.user_settings_set_entry("-CONVERT_PENYA_TO_PERINS_TIMER_MIN-", "30")
 
             # STATUS - Text events
             if event in self.logger_events:
@@ -156,8 +185,10 @@ class Gui:
             # MOBS - Mobs configuration
             if event == "-SELECT_MOBS-":
                 all_mobs = bot.get_all_mobs()
-                selected_mobs = self.__select_mobs_popup(all_mobs)
+                saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
+                selected_mobs, selected_mobs_indexes = self.__select_mobs_popup(all_mobs, saved_mobs_indexes)
                 bot.set_config(selected_mobs=selected_mobs)
+                sg.user_settings_set_entry("saved_mobs_indexes", selected_mobs_indexes)
 
             # VIDEO - Bot's Vision
             if values["-SHOW_FRAMES-"]:
@@ -333,7 +364,7 @@ class Gui:
                     [sg.HorizontalSeparator()],
                     [
                         sg.Text("Mobs kill goal:"),
-                        sg.InputText("infinity", size=(10, 1), enable_events=True, key="-MOBS_KILL_GOAL-"),
+                        sg.InputText("infinite", size=(10, 1), enable_events=True, key="-MOBS_KILL_GOAL-"),
                     ],
                     [
                         sg.Text("Fight Time Limit (s):"),
@@ -431,10 +462,13 @@ class Gui:
                 popup_window.close()
                 return values["-DROP-"], handlers[values["-DROP-"]]
 
-    def __select_mobs_popup(self, all_mobs, selected_mobs=[]):
+    def __select_mobs_popup(self, all_mobs, selected_mobs_indexes=[]):
         all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in all_mobs]
-        selected_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in selected_mobs]
-        selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in selected_mobs_titles]
+        selected_mobs_titles = [
+            f"{mob['name']} - {mob['element']} - {mob['map_name']}"
+            for i, mob in enumerate(all_mobs)
+            if i in selected_mobs_indexes
+        ]
         last_highlighted_mob = None
 
         popup_window = sg.Window(
@@ -458,10 +492,10 @@ class Gui:
         listbox = popup_window["-MOBS_LIST-"]
         while True:
             event, values = popup_window.read()
-            
+
             if event == sg.WIN_CLOSED:
                 popup_window.close()
-                return []
+                return [], []
 
             if values["-MOBS_SEARCH-"] != "":
                 search = values["-MOBS_SEARCH-"]
@@ -487,4 +521,4 @@ class Gui:
                 listbox.update(set_to_index=[])
             if event == "OK":
                 popup_window.close()
-                return [all_mobs[i] for i in selected_mobs_indexes]
+                return [all_mobs[i] for i in selected_mobs_indexes], selected_mobs_indexes
