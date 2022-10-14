@@ -14,8 +14,8 @@ from libs.ComputerVision import ComputerVision as CV
 
 
 @throttle()
-def emit_error(gui_window, msg):
-    gui_window.write_event_value("msg_red", msg)
+def emit_msg(gui_window, color, msg):
+    gui_window.write_event_value(color, msg)
 
 
 class Bot:
@@ -119,9 +119,10 @@ class Bot:
             try:
                 self.debug_frame, self.frame = self.wincap.get_frame()
             except Exception as e:
-                emit_error(
+                emit_msg(
                     _throttle_sec=15,
                     gui_window=self.gui_window,
+                    color="msg_red",
                     msg="Error getting the frame. Check if window is visible and attach again.",
                 )
                 print(f"Error getting the frame. Check if window is visible and attach again. {e}")
@@ -178,10 +179,12 @@ class Bot:
             if (self.config["mobs_kill_goal"] is not None) and (mobs_killed >= self.config["mobs_kill_goal"]):
                 break
 
-            if self.config["show_frames"]:
-                self.gui_window.write_event_value("debug_frame", self.debug_frame)
-
-            # self.gui_window.write_event_value("msg_red", "Mobs killed: " + str(mobs_killed))
+            emit_msg(
+                _throttle_sec=60,
+                gui_window=self.gui_window,
+                color="msg_green",
+                msg=f"Mobs killed: {mobs_killed}/{self.config['mobs_kill_goal']}",
+            )
 
             if not self.__farm_thread_running:
                 break
