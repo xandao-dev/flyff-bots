@@ -43,7 +43,7 @@ class Bot:
 
         # Synced Timers
         self.convert_penya_to_perins_timer = SyncedTimer(
-            self.__convert_penya_to_perins, self.config["convert_penya_to_perins_timer_min"] * 60
+            self.__convert_penya_to_perins, float(self.config["convert_penya_to_perins_timer_min"]) * 60
         )
 
     def setup(self, window_handler, gui_window):
@@ -104,7 +104,7 @@ class Bot:
         return MobInfo.get_all_mobs()
 
     def __update_timer_configs(self):
-        self.convert_penya_to_perins_timer.wait_seconds = self.config["convert_penya_to_perins_timer_min"] * 60
+        self.convert_penya_to_perins_timer.wait_seconds = float(self.config["convert_penya_to_perins_timer_min"]) * 60
 
     def __frame_thread(self):
         """
@@ -176,14 +176,16 @@ class Bot:
                     pass
                     # print("Current mob no found, checking another one.")
 
-            if (self.config["mobs_kill_goal"] is not None) and (mobs_killed >= self.config["mobs_kill_goal"]):
+            if (self.config["mobs_kill_goal"] is not None) and (mobs_killed >= int(self.config["mobs_kill_goal"])):
                 break
 
             emit_msg(
                 _throttle_sec=60,
                 gui_window=self.gui_window,
                 color="msg_green",
-                msg=f"Mobs killed: {mobs_killed}/{self.config['mobs_kill_goal']}",
+                msg=f"Mobs killed: {mobs_killed}/{int(self.config['mobs_kill_goal'])}"
+                if self.config["mobs_kill_goal"]
+                else f"Mobs killed: {mobs_killed}",
             )
 
             if not self.__farm_thread_running:
@@ -207,11 +209,11 @@ class Bot:
                     monsters_count += 1
                     break
                 else:
-                    if (time() - fight_time) >= self.config["fight_time_limit_sec"]:
+                    if (time() - fight_time) >= int(self.config["fight_time_limit_sec"]):
                         # Unselect the mob if the fight limite is over
                         self.keyboard.hold_key(VKEY["esc"], press_time=0.06)
                         break
-                    sleep(self.config["delay_to_check_mob_still_alive_sec"])
+                    sleep(float(self.config["delay_to_check_mob_still_alive_sec"]))
         return monsters_count
 
     def __mobs_not_available_on_screen(self):
@@ -271,7 +273,7 @@ class Bot:
             frame=self.frame,
             crop_area=(50, -50, 50, -50),
             template=current_mob["name_img"],
-            threshold=self.config["mob_pos_match_threshold"],
+            threshold=float(self.config["mob_pos_match_threshold"]),
             box_offset=(0, current_mob["height_offset"]),
             frame_to_draw=self.debug_frame if debug else None,
             draw_rect=self.config["show_mobs_pos_boxes"],
@@ -294,7 +296,7 @@ class Bot:
             frame=self.frame,
             crop_area=(0, 50, 200, -200),
             template=current_mob["element_img"],
-            threshold=self.config["mob_still_alive_match_threshold"],
+            threshold=float(self.config["mob_still_alive_match_threshold"]),
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Mob still alive" if debug and self.config["show_matches_text"] else None,
         )
@@ -319,7 +321,7 @@ class Bot:
             frame=self.frame,
             crop_area=(0, 50, 200, -200),
             template=GeneralAssets.MOB_LIFE_BAR,
-            threshold=self.config["mob_existence_match_threshold"],
+            threshold=float(self.config["mob_existence_match_threshold"]),
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Mob exists" if debug and self.config["show_matches_text"] else None,
         )
@@ -339,7 +341,7 @@ class Bot:
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             template=GeneralAssets.INVENTORY_ICONS,
-            threshold=self.config["inventory_icons_match_threshold"],
+            threshold=float(self.config["inventory_icons_match_threshold"]),
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Inv. open" if debug and self.config["show_matches_text"] else None,
         )
@@ -362,7 +364,7 @@ class Bot:
             frame=self.frame,
             crop_area=(300, 0, 0, 0),
             template=GeneralAssets.INVENTORY_PERIN_CONVERTER,
-            threshold=self.config["inventory_perin_converter_match_threshold"],
+            threshold=float(self.config["inventory_perin_converter_match_threshold"]),
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="P. converter" if debug and self.config["show_matches_text"] else None,
         )
