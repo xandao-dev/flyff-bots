@@ -238,7 +238,7 @@ class Gui:
 
         mobs_kill_goal = sg.user_settings_get_entry("-MOBS_KILL_GOAL-", "infinite")
         self.window["-MOBS_KILL_GOAL-"].update(mobs_kill_goal)
-        bot.set_config(mobs_kill_goal=mobs_kill_goal)
+        bot.set_config(mobs_kill_goal=mobs_kill_goal if mobs_kill_goal != "infinite" else None)
 
         fight_time_limit_sec = sg.user_settings_get_entry("-FIGHT_TIME_LIMIT_SEC-", "8")
         self.window["-FIGHT_TIME_LIMIT_SEC-"].update(fight_time_limit_sec)
