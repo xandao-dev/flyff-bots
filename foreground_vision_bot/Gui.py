@@ -59,17 +59,14 @@ class Gui:
                     self.window["-ATTACHED_WINDOW-"].update(truncated_game_window_name)
                     self.window["-START_BOT-"].update(disabled=False)
                     self.window["-STOP_BOT-"].update(disabled=True)
-                    self.window["-SELECT_MOBS-"].update(disabled=False)
             if event == "-START_BOT-":
                 bot.start()
                 self.window["-START_BOT-"].update(disabled=True)
                 self.window["-STOP_BOT-"].update(disabled=False)
-                self.window["-SELECT_MOBS-"].update(disabled=True)
             if event == "-STOP_BOT-":
                 bot.stop()
                 self.window["-START_BOT-"].update(disabled=False)
                 self.window["-STOP_BOT-"].update(disabled=True)
-                self.window["-SELECT_MOBS-"].update(disabled=False)
 
             # BOT OPTIONS - Video options
             if event == "-SHOW_FRAMES-":
