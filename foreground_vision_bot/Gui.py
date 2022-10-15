@@ -38,10 +38,10 @@ class Gui:
         sg.cprint_set_output_destination(self.window, "-ML-")
         sg.user_settings_filename(path=".")
         self.__set_hotkeys()
-        self.__load_settings()
         return self.window
 
     def loop(self, bot):
+        self.__load_settings(bot)
         while True:
             event, values = self.window.read(timeout=1000)
 
@@ -201,33 +201,61 @@ class Gui:
     def close(self):
         self.window.close()
 
-    def __load_settings(self):
-        self.window["-SHOW_MATCHES_TEXT-"].update(sg.user_settings_get_entry("-SHOW_MATCHES_TEXT-", False))
-        self.window["-SHOW_BOXES-"].update(sg.user_settings_get_entry("-SHOW_BOXES-", False))
-        self.window["-SHOW_MARKERS-"].update(sg.user_settings_get_entry("-SHOW_MARKERS-", False))
+    def __load_settings(self, bot):
+        show_matches_text = sg.user_settings_get_entry("-SHOW_MATCHES_TEXT-", False)
+        self.window["-SHOW_MATCHES_TEXT-"].update(show_matches_text)
+        bot.set_config(show_matches_text=show_matches_text)
 
-        self.window["-MOB_POS_MATCH_THRESHOLD-"].update(sg.user_settings_get_entry("-MOB_POS_MATCH_THRESHOLD-", 0.7))
-        self.window["-MOB_STILL_ALIVE_MATCH_THRESHOLD-"].update(
-            sg.user_settings_get_entry("-MOB_STILL_ALIVE_MATCH_THRESHOLD-", 0.7)
-        )
-        self.window["-MOB_EXISTENCE_MATCH_THRESHOLD-"].update(
-            sg.user_settings_get_entry("-MOB_EXISTENCE_MATCH_THRESHOLD-", 0.7)
-        )
-        self.window["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"].update(
-            sg.user_settings_get_entry("-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-", 0.7)
-        )
-        self.window["-INVENTORY_ICONS_MATCH_THRESHOLD-"].update(
-            sg.user_settings_get_entry("-INVENTORY_ICONS_MATCH_THRESHOLD-", 0.7)
-        )
+        show_mobs_pos_boxes = sg.user_settings_get_entry("-SHOW_BOXES-", False)
+        self.window["-SHOW_BOXES-"].update(show_mobs_pos_boxes)
+        bot.set_config(show_mobs_pos_boxes=show_mobs_pos_boxes)
 
-        self.window["-MOBS_KILL_GOAL-"].update(sg.user_settings_get_entry("-MOBS_KILL_GOAL-", "infinite"))
-        self.window["-FIGHT_TIME_LIMIT_SEC-"].update(sg.user_settings_get_entry("-FIGHT_TIME_LIMIT_SEC-", "8"))
-        self.window["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"].update(
-            sg.user_settings_get_entry("-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-", "0.25")
+        show_mobs_pos_markers = sg.user_settings_get_entry("-SHOW_MARKERS-", False)
+        self.window["-SHOW_MARKERS-"].update(show_mobs_pos_markers)
+        bot.set_config(show_mobs_pos_markers=show_mobs_pos_markers)
+
+        mob_pos_match_threshold = sg.user_settings_get_entry("-MOB_POS_MATCH_THRESHOLD-", 0.7)
+        self.window["-MOB_POS_MATCH_THRESHOLD-"].update(mob_pos_match_threshold)
+        bot.set_config(mob_pos_match_threshold=mob_pos_match_threshold)
+
+        mob_still_alive_match_threshold = sg.user_settings_get_entry("-MOB_STILL_ALIVE_MATCH_THRESHOLD-", 0.7)
+        self.window["-MOB_STILL_ALIVE_MATCH_THRESHOLD-"].update(mob_still_alive_match_threshold)
+        bot.set_config(mob_still_alive_match_threshold=mob_still_alive_match_threshold)
+
+        mob_existence_match_threshold = sg.user_settings_get_entry("-MOB_EXISTENCE_MATCH_THRESHOLD-", 0.7)
+        self.window["-MOB_EXISTENCE_MATCH_THRESHOLD-"].update(mob_existence_match_threshold)
+        bot.set_config(mob_existence_match_threshold=mob_existence_match_threshold)
+
+        inventory_perin_converter_match_threshold = sg.user_settings_get_entry(
+            "-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-", 0.7
         )
-        self.window["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"].update(
-            sg.user_settings_get_entry("-CONVERT_PENYA_TO_PERINS_TIMER_MIN-", "30")
-        )
+        self.window["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"].update(inventory_perin_converter_match_threshold)
+        bot.set_config(inventory_perin_converter_match_threshold=inventory_perin_converter_match_threshold)
+
+        inventory_icons_match_threshold = sg.user_settings_get_entry("-INVENTORY_ICONS_MATCH_THRESHOLD-", 0.7)
+        self.window["-INVENTORY_ICONS_MATCH_THRESHOLD-"].update(inventory_icons_match_threshold)
+        bot.set_config(inventory_icons_match_threshold=inventory_icons_match_threshold)
+
+        mobs_kill_goal = sg.user_settings_get_entry("-MOBS_KILL_GOAL-", "infinite")
+        self.window["-MOBS_KILL_GOAL-"].update(mobs_kill_goal)
+        bot.set_config(mobs_kill_goal=mobs_kill_goal)
+
+        fight_time_limit_sec = sg.user_settings_get_entry("-FIGHT_TIME_LIMIT_SEC-", "8")
+        self.window["-FIGHT_TIME_LIMIT_SEC-"].update(fight_time_limit_sec)
+        bot.set_config(fight_time_limit_sec=fight_time_limit_sec)
+
+        delay_to_check_mob_still_alive_sec = sg.user_settings_get_entry("-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-", "0.25")
+        self.window["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"].update(delay_to_check_mob_still_alive_sec)
+        bot.set_config(delay_to_check_mob_still_alive_sec=delay_to_check_mob_still_alive_sec)
+
+        convert_penya_to_perins_timer_min = sg.user_settings_get_entry("-CONVERT_PENYA_TO_PERINS_TIMER_MIN-", "30")
+        self.window["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"].update(convert_penya_to_perins_timer_min)
+        bot.set_config(convert_penya_to_perins_timer_min=convert_penya_to_perins_timer_min)
+
+        all_mobs = bot.get_all_mobs()
+        saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
+        selected_mobs = [all_mobs[i] for i in saved_mobs_indexes]
+        bot.set_config(selected_mobs=selected_mobs)
 
     def __set_hotkeys(self):
         self.window.bind("<Alt_L><s>", "-STOP_BOT-")
