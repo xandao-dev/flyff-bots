@@ -38,6 +38,7 @@ class Gui:
         sg.cprint_set_output_destination(self.window, "-ML-")
         sg.user_settings_filename(path=".")
         self.__set_hotkeys()
+        self.__load_settings()
         return self.window
 
     def loop(self, bot):
@@ -79,15 +80,15 @@ class Gui:
                 self.window["-VISION_FRAME-"].update(visible=(values["-SHOW_FRAMES-"]))
                 self.window.refresh()  # Combined with contents_changed, will compute the new size of the element
                 self.window["-MAIN_COLUMN-"].contents_changed()
+            if event == "-SHOW_MATCHES_TEXT-":
+                bot.set_config(show_matches_text=values["-SHOW_MATCHES_TEXT-"])
+                sg.user_settings_set_entry("-SHOW_MATCHES_TEXT-", values["-SHOW_MATCHES_TEXT-"])
             if event == "-SHOW_BOXES-":
                 bot.set_config(show_mobs_pos_boxes=values["-SHOW_BOXES-"])
                 sg.user_settings_set_entry("-SHOW_BOXES-", values["-SHOW_BOXES-"])
             if event == "-SHOW_MARKERS-":
                 bot.set_config(show_mobs_pos_markers=values["-SHOW_MARKERS-"])
                 sg.user_settings_set_entry("-SHOW_MARKERS-", values["-SHOW_MARKERS-"])
-            if event == "-SHOW_MATCHES_TEXT-":
-                bot.set_config(show_matches_text=values["-SHOW_MATCHES_TEXT-"])
-                sg.user_settings_set_entry("-SHOW_MATCHES_TEXT-", values["-SHOW_MATCHES_TEXT-"])
 
             # BOT OPTIONS - Threshold options
             if event.startswith("-BOT_THRESHOLD_OPTIONS-"):
@@ -168,7 +169,7 @@ class Gui:
                     convert_penya_to_perins_timer_min = float(values["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"])
                     bot.set_config(convert_penya_to_perins_timer_min=convert_penya_to_perins_timer_min)
                     sg.user_settings_set_entry(
-                        "CONVERT_PENYA_TO_PERINS_TIMER_MIN", values["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"]
+                        "-CONVERT_PENYA_TO_PERINS_TIMER_MIN-", values["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"]
                     )
                 except ValueError:
                     sg.cprint("Invalid convert penya to perins timer, must be in minutes")
@@ -202,6 +203,34 @@ class Gui:
 
     def close(self):
         self.window.close()
+
+    def __load_settings(self):
+        self.window["-SHOW_MATCHES_TEXT-"].update(sg.user_settings_get_entry("-SHOW_MATCHES_TEXT-", False))
+        self.window["-SHOW_BOXES-"].update(sg.user_settings_get_entry("-SHOW_BOXES-", False))
+        self.window["-SHOW_MARKERS-"].update(sg.user_settings_get_entry("-SHOW_MARKERS-", False))
+
+        self.window["-MOB_POS_MATCH_THRESHOLD-"].update(sg.user_settings_get_entry("-MOB_POS_MATCH_THRESHOLD-", 0.7))
+        self.window["-MOB_STILL_ALIVE_MATCH_THRESHOLD-"].update(
+            sg.user_settings_get_entry("-MOB_STILL_ALIVE_MATCH_THRESHOLD-", 0.7)
+        )
+        self.window["-MOB_EXISTENCE_MATCH_THRESHOLD-"].update(
+            sg.user_settings_get_entry("-MOB_EXISTENCE_MATCH_THRESHOLD-", 0.7)
+        )
+        self.window["-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-"].update(
+            sg.user_settings_get_entry("-INVENTORY_PERIN_CONVERTER_MATCH_THRESHOLD-", 0.7)
+        )
+        self.window["-INVENTORY_ICONS_MATCH_THRESHOLD-"].update(
+            sg.user_settings_get_entry("-INVENTORY_ICONS_MATCH_THRESHOLD-", 0.7)
+        )
+
+        self.window["-MOBS_KILL_GOAL-"].update(sg.user_settings_get_entry("-MOBS_KILL_GOAL-", "infinite"))
+        self.window["-FIGHT_TIME_LIMIT_SEC-"].update(sg.user_settings_get_entry("-FIGHT_TIME_LIMIT_SEC-", "8"))
+        self.window["-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-"].update(
+            sg.user_settings_get_entry("-DELAY_TO_CHECK_MOB_STILL_ALIVE_SEC-", "0.25")
+        )
+        self.window["-CONVERT_PENYA_TO_PERINS_TIMER_MIN-"].update(
+            sg.user_settings_get_entry("-CONVERT_PENYA_TO_PERINS_TIMER_MIN-", "30")
+        )
 
     def __set_hotkeys(self):
         self.window.bind("<Alt_L><s>", "-STOP_BOT-")
