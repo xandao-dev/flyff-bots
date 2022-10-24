@@ -1,5 +1,6 @@
 # Project
 *.json
+gui-inspect-tools
 
 #VS Code configs
 .vscode
