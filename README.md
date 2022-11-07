@@ -55,6 +55,9 @@
 <b>Awakening Bot</b>
 
 
+https://user-images.githubusercontent.com/22106326/200222627-30049ad2-ebf1-4d7f-a1b5-7795e2967215.mp4
+
+
 https://user-images.githubusercontent.com/22106326/150702322-967cf2d8-d789-45e6-af61-503c96dc2ea9.mp4
 </div>
 
