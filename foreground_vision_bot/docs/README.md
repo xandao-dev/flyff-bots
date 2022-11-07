@@ -21,7 +21,8 @@
 
 <div>
 <b>Foreground Vision Bot - Instructions </b>
-
+<br>
+<br>
 <img src="config.png" alt="Flyff bot">
 <br>
 <p>Put the attack button in F1 Hotkey</p>
