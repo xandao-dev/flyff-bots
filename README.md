@@ -47,14 +47,15 @@
 
 <div align="center">
 <b>Foreground Vision Bot</b>
+<p>See the Foreground Vision Bot guide <a href="./foreground_vision_bot/docs/README.md">here</a></p>
 
 
-https://user-images.githubusercontent.com/22106326/150702302-fb479e56-2cbb-4030-b77a-65a43c81c4c0.mp4
-
-![track](https://user-images.githubusercontent.com/22106326/188294032-2049f665-b8ad-4a36-80e9-42ef96e25485.jpg)
-
+<img src="foreground_vision_bot/docs/bot.png" alt="Flyff bot">
 
 <b>Awakening Bot</b>
+
+
+https://user-images.githubusercontent.com/22106326/200222627-30049ad2-ebf1-4d7f-a1b5-7795e2967215.mp4
 
 
 https://user-images.githubusercontent.com/22106326/150702322-967cf2d8-d789-45e6-af61-503c96dc2ea9.mp4
@@ -69,6 +70,7 @@ https://user-images.githubusercontent.com/22106326/150702322-967cf2d8-d789-45e6-
 * Automatically attack the monsters and move to the next one
 * If no monsters are found, it will automatically run to find more monsters
 * Human-like mouse movement
+* GUI available, to watch the bot and configure it
 
 **Awakening Bot**
 
@@ -101,7 +103,6 @@ https://user-images.githubusercontent.com/22106326/150702322-967cf2d8-d789-45e6-
 * [numpy](https://www.numpy.org/) - Scientific computing package
 
 
-<!-- GETTING STARTED -->
 ## Getting Started
 
 To get a local copy up and running follow these simple steps.
@@ -124,12 +125,11 @@ To get a local copy up and running follow these simple steps.
 1. `import win32gui ImportError: DLL load failed: The specified module could not be found.`
     * Install [pywin32](https://github.com/mhammond/pywin32/releases) from binaries for your python version
 
-<!-- USAGE EXAMPLES -->
 ## Usage
 
 * Run foreground vision bot
 
-  1. Open the game and configure it like in the [image](./foreground_vision_bot/docs/settings.png) inside the bot folder;
+  1. Follow the [configuration](./foreground_vision_bot/docs/README.md) steps to configure the bot
   2. Run the bot: `python3 foreground_vision_farm.py`
 
 * Run awakening bot
@@ -148,13 +148,10 @@ To get a local copy up and running follow these simple steps.
   2. Run the recorder: `python3 recorder.py` or `python3 recorder_no_mouse.py`
   3. Run the playback: `python3 foreground_playback.py` or `python3 background_playback.py`
 
-<!-- ROADMAP -->
 ## Roadmap
 
 See the [open issues](https://github.com/xandao-dev/flyff-bots/issues) for a list of proposed features (and known issues).
 
-
-<!-- CONTRIBUTING -->
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
@@ -165,15 +162,12 @@ Contributions are what make the open source community such an amazing place to b
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See [LICENSE](./LICENSE.md) for more information.
 
 Free software =)
 
-
-<!-- CONTACT -->
 ## Contact
 
 Alexandre Calil - [Linkedin](https://www.linkedin.com/in/xandao-dev/) - [alexandre@xandao.dev](mailto:alexandre@xandao.dev)
