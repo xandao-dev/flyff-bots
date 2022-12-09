@@ -13,6 +13,7 @@ mob_cetiri_electricity_path = str(Path(__file__).parent / "names" / "cetiri_elec
 mob_oseti_electricity_path = str(Path(__file__).parent / "names" / "oseti_electricity.png")
 mob_carvi_fire_path = str(Path(__file__).parent / "names" / "carvi_fire.png")
 mob_nyamuli_fire_path = str(Path(__file__).parent / "names" / "nyamuli_fire.png")
+mob_aibatt_wind_path = str(Path(__file__).parent / "names" / "aibatt_wind.png")
 
 mob_type_wind_path = str(Path(__file__).parent / "mob_types" / "wind.png")
 mob_type_fire_path = str(Path(__file__).parent / "mob_types" / "fire.png")
@@ -35,6 +36,14 @@ class MobType:
 
 
 class MobInfo:
+    AIBATT = {
+        "name": "aibatt",
+        "element": "wind",
+        "map_name": "Flaris",
+        "height_offset": 40,
+        "name_img": cv.imread(mob_aibatt_wind_path, cv.IMREAD_GRAYSCALE),
+        "element_img": MobType.WIND,
+    }
     ROSPOSA = {
         "name": "rosposa",
         "element": "water",
