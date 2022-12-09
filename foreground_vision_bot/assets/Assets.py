@@ -40,7 +40,7 @@ class MobInfo:
         "name": "aibatt",
         "element": "wind",
         "map_name": "Flaris",
-        "height_offset": 40,
+        "height_offset": 30,
         "name_img": cv.imread(mob_aibatt_wind_path, cv.IMREAD_GRAYSCALE),
         "element_img": MobType.WIND,
     }

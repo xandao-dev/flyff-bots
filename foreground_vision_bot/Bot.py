@@ -135,7 +135,7 @@ class Bot:
                         current_mob_info_index = 0
                     current_mob = self.config["selected_mobs"][current_mob_info_index]
                     matches = self.__get_mobs_position(current_mob, debug=True)
-                    self.__check_mob_existence(debug=True)
+                    self.__check_mob_existence(current_mob, debug=True)
                     self.__check_mob_still_alive(current_mob, debug=True)
                     if not matches:
                         current_mob_info_index += 1
@@ -199,7 +199,7 @@ class Bot:
         monsters_count = mobs_killed
         mob_pos = get_point_near_center(frame_center, points)
         self.mouse.move(to_point=mob_pos, duration=0.1)
-        if self.__check_mob_existence():
+        if self.__check_mob_existence(current_mob):
             self.mouse.left_click()
             self.keyboard.hold_key(VKEY["F1"], press_time=0.06)
             self.mouse.move_outside_game(duration=0.2)
@@ -309,18 +309,19 @@ class Bot:
         # print(f"No mob selected. mob_still_alive_match_threshold: {max_val}")
         return False
 
-    def __check_mob_existence(self, debug=False):
+    def __check_mob_existence(self, current_mob, debug=False):
         """
         Check if the mob exists by checking if the mob life bar exists.
         It's better to use mob life bar than mob type icon because mob life bar is bigger,
         so it's faster to match.
+        But we can't use mob life bar because it changes when the mob is hit in Moon Flyff.
         """
 
         # frame_cute_area get the top of the screen to see if the mob life bar exists
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             crop_area=(0, 50, 200, -200),
-            template=GeneralAssets.MOB_LIFE_BAR,
+            template=current_mob["element_img"],
             threshold=float(self.config["mob_existence_match_threshold"]),
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Mob exists" if debug and self.config["show_matches_text"] else None,
