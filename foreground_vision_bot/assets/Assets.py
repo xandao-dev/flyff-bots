@@ -1,6 +1,9 @@
 from pathlib import Path
 
 import cv2 as cv
+import json
+import os
+import shutil
 
 mob_rosposa_water_path = str(Path(__file__).parent / "names" / "rosposa_water.png")
 mob_kingyo_water_path = str(Path(__file__).parent / "names" / "kingyo_water.png")
@@ -117,18 +120,49 @@ class MobInfo:
     }
 
     @staticmethod
-    def get_all_mobs():
+    def add_new_mob(name: str, map_name: str, image_path: str, height_offset: int, element: str) -> None:
         """
-        Get a list of all mobs registered. Using a approach of getting all 
-        attributes of the class, and filtering the internal class attributes.
+        Add new mob to json collection (mobs_list.json)
+        """
+        json_collection_path = str(Path(__file__).parent / "mobs_list.json")
 
-        :return: list of all mobs
+        # copy image for cv detection in asset folder
+        shutil.copyfile(image_path, str(Path(__file__).parent / "names" / f"{name}.png"))
+
+        current_mobs_list = MobInfo.get_all_mobs()
+        current_mobs_list[name] = {
+            "element": element,
+            "map_name": map_name,
+            "height_offset": height_offset
+        }
+
+        file = open(json_collection_path, 'w+')
+        json.dump(current_mobs_list, file)
+
+
+    @staticmethod
+    def get_all_mobs() -> dict:
         """
-        return [
-            getattr(MobInfo, attr)
-            for attr in dir(MobInfo)
-            if not attr.startswith("__") and not callable(getattr(MobInfo, attr))
-        ]
+        Get a list of all mobs registered. Using a dump of mobs_list.json file
+
+        :return: list of all mobs as dict (key: 'mob_name', val: params_dict)
+        """
+        json_collection_path = str(Path(__file__).parent / "mobs_list.json")
+
+        # Check mobs_list.json
+        if not os.path.isfile(json_collection_path):
+            file = open(json_collection_path, 'w+')
+            json.dump({}, file)
+            file.close()
+
+        mobs_list = json.load(open(json_collection_path, 'r'))
+        print('------>',mobs_list)
+        return mobs_list
+        #return [
+        #    getattr(MobInfo, attr)
+        #    for attr in dir(MobInfo)
+        #    if not attr.startswith("__") and not callable(getattr(MobInfo, attr))
+        #]
 
 
 class GeneralAssets:

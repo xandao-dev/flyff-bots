@@ -4,6 +4,8 @@ import cv2 as cv
 import PySimpleGUI as sg
 from utils.helpers import get_window_handlers, hex_variant
 
+import re
+
 
 class Gui:
     def __init__(self, theme="DarkAmber"):
@@ -187,6 +189,10 @@ class Gui:
                 selected_mobs, selected_mobs_indexes = self.__select_mobs_popup(all_mobs, saved_mobs_indexes)
                 bot.set_config(selected_mobs=selected_mobs)
                 sg.user_settings_set_entry("saved_mobs_indexes", selected_mobs_indexes)
+            
+            if event == "-ADD_MOB-":
+                self.__add_mobs_popup()
+                pass
 
             # VIDEO - Bot's Vision
             if values["-SHOW_FRAMES-"]:
@@ -310,7 +316,7 @@ class Gui:
                 [
                     [
                         sg.Button("Select Mobs", key="-SELECT_MOBS-"),
-                        sg.Button("Add Mob", disabled=True, key="-ADD_MOB-"),
+                        sg.Button("Add Mob", key="-ADD_MOB-"),
                         sg.Button("Delete Mob", disabled=True, key="-DELETE_MOB-"),
                     ]
                 ],
@@ -576,3 +582,67 @@ class Gui:
             if event == "OK":
                 popup_window.close()
                 return [all_mobs[i] for i in selected_mobs_indexes], selected_mobs_indexes
+    
+    def __add_mobs_popup(self):
+        from assets.Assets import mob_type_wind_path, mob_type_fire_path, mob_type_soil_path, mob_type_water_path, mob_type_electricity_path
+
+        element_buttons_layout = [
+            sg.Text("Select mob element: "),
+            sg.Input(key="-ELEMENT-", visible=False), # hidden controlled input
+            sg.Button("", image_source=mob_type_wind_path, key="-ELEMENT-WIND-"),
+            sg.Button("", image_source=mob_type_fire_path, key="-ELEMENT-FIRE-"),
+            sg.Button("", image_source=mob_type_soil_path, key="-ELEMENT-SOIL-"),
+            sg.Button("", image_source=mob_type_water_path, key="-ELEMENT-WATER-"),
+            sg.Button("", image_source=mob_type_electricity_path, key="-ELEMENT-ELECTRICITY")
+        ]
+
+        popup_window = sg.Window(
+            "Add mob",
+            [
+                [sg.Text("Enter mob name: "), sg.Input(key="-NAME-")],
+                [sg.Text("Enter map name (location): "), sg.Input(key="-MAP-")],
+                [
+                    sg.Text("Choose an image file (mob name): "),
+                    sg.Input(key="-IMAGE-", change_submits=True, size=(25, 20), disabled=True, text_color="#000"),
+                    sg.FileBrowse(key="-IMAGE-")
+                ],
+                [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True)],
+                element_buttons_layout,
+                [sg.Button("Reset"), sg.Button("Save"), sg.Button("PRINT FORM")],
+            ],
+            modal=True,
+            size=(500, 225)
+        )
+
+        while True:
+            event, values = popup_window.read()
+            print('event: ', event, values)
+
+            if event == sg.WIN_CLOSED:
+                popup_window.close()
+                return
+            if event == "Reset":
+                pass
+            if event == "Save":
+                from assets.Assets import MobInfo
+                MobInfo.add_new_mob(name=values["-NAME-"], map_name=values["-MAP-"], image_path=values["-IMAGE-"],
+                                    height_offset=values["-HEIGHT-"], element=values["-ELEMENT-"])
+                popup_window.close()
+                return
+            if event == "PRINT FORM":
+                print('values:', values)
+                pass
+            if event == "-HEIGHT-":
+                # height validation - only numbers
+                popup_window.Element(event).update(re.sub('[^0-9]','', values['-HEIGHT-']))
+                pass
+            if "-ELEMENT-" in event:
+                current_element = event.split('-')[2].lower()
+
+                for elem in element_buttons_layout:
+                     if elem.Disabled: elem.update(disabled=False)
+                popup_window.Element(event).update(disabled=True)
+
+                popup_window.Element('-ELEMENT-').update(current_element)
+                pass
+        pass
