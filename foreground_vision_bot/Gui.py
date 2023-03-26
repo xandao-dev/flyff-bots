@@ -191,7 +191,11 @@ class Gui:
                 sg.user_settings_set_entry("saved_mobs_indexes", selected_mobs_indexes)
             
             if event == "-ADD_MOB-":
-                self.__add_mobs_popup()
+                self.__add_mob_popup()
+                pass
+
+            if event == "-DELETE_MOB-":
+                self.__delete_mobs_popup()
                 pass
 
             # VIDEO - Bot's Vision
@@ -317,7 +321,7 @@ class Gui:
                     [
                         sg.Button("Select Mobs", key="-SELECT_MOBS-"),
                         sg.Button("Add Mob", key="-ADD_MOB-"),
-                        sg.Button("Delete Mob", disabled=True, key="-DELETE_MOB-"),
+                        sg.Button("Delete Mob", key="-DELETE_MOB-"),
                     ]
                 ],
                 pad=((5, 15), (10, 5)),
@@ -583,7 +587,7 @@ class Gui:
                 popup_window.close()
                 return [all_mobs[i] for i in selected_mobs_indexes], selected_mobs_indexes
     
-    def __add_mobs_popup(self):
+    def __add_mob_popup(self):
         from assets.Assets import mob_type_wind_path, mob_type_fire_path, mob_type_soil_path, mob_type_water_path, mob_type_electricity_path
 
         element_buttons_layout = [
@@ -645,4 +649,30 @@ class Gui:
 
                 popup_window.Element('-ELEMENT-').update(current_element)
                 pass
+        pass
+
+    def __delete_mobs_popup(self):
+        popup_window = sg.Window(
+            "Delete mobs",
+            [
+                [sg.Text("Delete mobs list: ")],
+            ],
+            modal=True,
+            size=(500, 225)
+        )
+
+        while True:
+            event, values = popup_window.read()
+
+            if event == sg.WIN_CLOSED:
+                popup_window.close()
+                return
+            if event == "Reset":
+                pass
+            if event == "Save":
+                from assets.Assets import MobInfo
+                MobInfo.add_new_mob(name=values["-NAME-"], map_name=values["-MAP-"], image_path=values["-IMAGE-"],
+                                    height_offset=values["-HEIGHT-"], element=values["-ELEMENT-"])
+                popup_window.close()
+                return
         pass
