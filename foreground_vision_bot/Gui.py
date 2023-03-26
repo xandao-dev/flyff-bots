@@ -184,11 +184,13 @@ class Gui:
 
             # MOBS - Mobs configuration
             if event == "-SELECT_MOBS-":
+                print('bot.config[selected_mobs]', bot.config['selected_mobs'])
                 all_mobs = bot.get_all_mobs()
-                saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
-                selected_mobs, selected_mobs_indexes = self.__select_mobs_popup(all_mobs, saved_mobs_indexes)
-                bot.set_config(selected_mobs=selected_mobs)
-                sg.user_settings_set_entry("saved_mobs_indexes", selected_mobs_indexes)
+                #saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
+                selected_mobs, selected_mobs_indexes = self.__select_mobs_popup(all_mobs, bot, selected_mobs_names=bot.config['selected_mobs'])
+                print('EVENT selected_mobs', selected_mobs, ' selected_indexes: ', selected_mobs_indexes)
+                #bot.set_config(selected_mobs=selected_mobs)
+                #sg.user_settings_set_entry("saved_mobs_indexes", selected_mobs_indexes)
             
             if event == "-ADD_MOB-":
                 self.__add_mob_popup()
@@ -263,8 +265,11 @@ class Gui:
         bot.set_config(convert_penya_to_perins_timer_min=convert_penya_to_perins_timer_min)
 
         all_mobs = bot.get_all_mobs()
-        saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
-        selected_mobs = [all_mobs[i] for i in saved_mobs_indexes]
+        # saved_mobs_indexes no more neeeded
+        #saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
+        #selected_mobs = [all_mobs[i] for i in saved_mobs_indexes] # теперь all_mobs это дикт, по числовому индексу не найти
+        selected_mobs = sg.user_settings_get_entry("saved_selected_mobs", [])
+        print('selected_mobs in __load_settings: ', selected_mobs)
         bot.set_config(selected_mobs=selected_mobs)
 
     def __set_hotkeys(self):
@@ -525,8 +530,76 @@ class Gui:
             if event == "OK":
                 popup_window.close()
                 return values["-DROP-"], handlers[values["-DROP-"]]
+            
+    def __select_mobs_popup(self, all_mobs, bot, is_delete_form=False, selected_mobs_names=[]):
+        all_mobs_titles = [f"{name} - {params['element']} - {params['map_name']}" for (name, params) in dict.items(all_mobs)]
+        selected_mobs_titles = [
+            f"{name} - {params['element']} - {params['map_name']}" for (name, params) in dict.items(all_mobs)
+            if name in selected_mobs_names
+        ]
+        last_highlighted_mob = None
+        print('selected_mobs_names: ', selected_mobs_names)
 
-    def __select_mobs_popup(self, all_mobs, selected_mobs_indexes=[]):
+        popup_window = sg.Window(
+            "Select Mobs" if not is_delete_form else "Delete mobs",
+            [
+                [sg.Text(f"Please select the mobs to {'kill' if not is_delete_form else 'delete'}:")],
+                [sg.Text("Find: "), sg.Input(enable_events=True, expand_x=True, key="-MOBS_SEARCH-")],
+                [
+                    sg.Listbox(
+                        values=all_mobs_titles,
+                        default_values=selected_mobs_titles,
+                        size=(60, 10),
+                        enable_events=True,
+                        select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                        key="-MOBS_LIST-",
+                    )
+                ],
+                [sg.Button("Reset"), sg.OK()],
+            ],
+        )
+        listbox = popup_window["-MOBS_LIST-"]
+        while True:
+            event, values = popup_window.read()
+
+            if event == sg.WIN_CLOSED:
+                popup_window.close()
+                return [], []
+
+            if values["-MOBS_SEARCH-"] != "":
+                search = values["-MOBS_SEARCH-"]
+                best_match = difflib.get_close_matches(search, all_mobs_titles, n=1, cutoff=0.0)
+                if last_highlighted_mob is not None:
+                    listbox.Widget.itemconfigure(last_highlighted_mob, bg=listbox.BackgroundColor)
+                    last_highlighted_mob = None
+                if len(best_match) > 0:
+                    best_match_index = all_mobs_titles.index(best_match[0])
+                    listbox.Widget.itemconfigure(best_match_index, bg=hex_variant(listbox.BackgroundColor, -20))
+                    listbox.update(scroll_to_index=best_match_index)
+                    last_highlighted_mob = best_match_index
+            else:
+                if last_highlighted_mob is not None:
+                    listbox.Widget.itemconfigure(last_highlighted_mob, bg=listbox.BackgroundColor)
+                    last_highlighted_mob = None
+
+            if event == "-MOBS_LIST-" and len(values["-MOBS_LIST-"]):
+                print('values[-MOBS_LIST-]', values["-MOBS_LIST-"])
+                # values["-MOBS_LIST-"] = ['aibat - flaris - water']
+                selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
+                #selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
+                listbox.update(set_to_index=selected_mobs_indexes)
+
+            if event == "Reset":
+                listbox.update(set_to_index=[])
+            if event == "OK":
+                selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
+                popup_window.close()
+                names = list(dict.keys(all_mobs))
+                sg.user_settings_set_entry("saved_selected_mobs", [names[i] for i in selected_mobs_indexes])
+                bot.set_config(selected_mobs=[names[i] for i in selected_mobs_indexes])
+                return [names[i] for i in selected_mobs_indexes], selected_mobs_indexes
+
+    def __select_mobs_popup_OLD(self, all_mobs, selected_mobs_indexes=[]):
         all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in all_mobs]
         selected_mobs_titles = [
             f"{mob['name']} - {mob['element']} - {mob['map_name']}"
