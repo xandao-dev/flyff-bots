@@ -138,7 +138,25 @@ class MobInfo:
 
         file = open(json_collection_path, 'w+')
         json.dump(current_mobs_list, file)
+    
+    @staticmethod
+    def delete_mobs(name_list: list[str]) -> None:
+        """
+        Delete list of mobs from json collection (mobs_list.json)
+        """
+        json_collection_path = str(Path(__file__).parent / "mobs_list.json")
+        current_mobs_list = MobInfo.get_all_mobs()
+        new_mobs_list = {}
 
+        # delete images for cv detection from asset folder
+        for key in current_mobs_list:
+            if key in name_list:
+                os.remove(str(Path(__file__).parent / "names" / f"{key}.png"))
+            else:
+                new_mobs_list[key] = current_mobs_list[key]
+
+        file = open(json_collection_path, 'w+')
+        json.dump(new_mobs_list, file)
 
     @staticmethod
     def get_all_mobs() -> dict:
