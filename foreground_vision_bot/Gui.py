@@ -634,11 +634,11 @@ class Gui:
                 [
                     sg.Text("Choose an image file (mob name): "),
                     sg.Input(key="-IMAGE-", change_submits=True, size=(25, 20), disabled=True, text_color="#000"),
-                    sg.FileBrowse(key="-IMAGE-")
+                    sg.FileBrowse()
                 ],
                 [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True)],
                 element_buttons_layout,
-                [sg.Button("Reset"), sg.Button("Save"), sg.Button("PRINT FORM")],
+                [sg.Frame('', [[sg.Button("Reset"), sg.Button("Save"), sg.Button("PRINT FORM")]], border_width=0, pad=((0, 0),(44, 0)))],
             ],
             modal=True,
             size=(500, 225)
@@ -652,13 +652,27 @@ class Gui:
                 popup_window.close()
                 return
             if event == "Reset":
+                for elem in element_buttons_layout:
+                     if elem.Disabled: elem.update(disabled=False)
+
+                for value in values:
+                    if value.startswith('-'):
+                        popup_window.Element(value).update('')
                 pass
             if event == "Save":
-                from assets.Assets import MobInfo
-                MobInfo.add_new_mob(name=values["-NAME-"], map_name=values["-MAP-"], image_path=values["-IMAGE-"],
-                                    height_offset=values["-HEIGHT-"], element=values["-ELEMENT-"])
-                popup_window.close()
-                return
+                # form validation
+                is_form_valid = True
+                for key in ['-NAME-', '-MAP-', '-IMAGE-', '-HEIGHT-', '-ELEMENT-']:
+                    if not len(values[key]):
+                        is_form_valid = False
+                        break
+
+                if is_form_valid:
+                    from assets.Assets import MobInfo
+                    MobInfo.add_new_mob(name=values["-NAME-"], map_name=values["-MAP-"], image_path=values["-IMAGE-"],
+                                        height_offset=values["-HEIGHT-"], element=values["-ELEMENT-"])
+                    popup_window.close()
+                    return
             if event == "PRINT FORM":
                 print('values:', values)
                 pass
