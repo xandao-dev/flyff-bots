@@ -4,6 +4,7 @@ import cv2 as cv
 import json
 import os
 import shutil
+from enum import Enum
 
 mob_rosposa_water_path = str(Path(__file__).parent / "names" / "rosposa_water.png")
 mob_kingyo_water_path = str(Path(__file__).parent / "names" / "kingyo_water.png")
@@ -28,6 +29,14 @@ user_target_bar_path = str(Path(__file__).parent / "general" / "user_target_bar.
 inventory_perin_converter_path = str(Path(__file__).parent / "general" / "inventory_perin_converter.png")
 inventory_icons_path = str(Path(__file__).parent / "general" / "inventory_icons.png")
 
+MobTypesDict = {
+    'WIND': cv.imread(mob_type_wind_path, cv.IMREAD_GRAYSCALE),
+    'FIRE': cv.imread(mob_type_fire_path, cv.IMREAD_GRAYSCALE),
+    'SOIL': cv.imread(mob_type_soil_path, cv.IMREAD_GRAYSCALE),
+    'WATER': cv.imread(mob_type_water_path, cv.IMREAD_GRAYSCALE),
+    'ELECTRICITY': cv.imread(mob_type_electricity_path, cv.IMREAD_GRAYSCALE)
+}
+    
 
 class MobType:
     WIND = cv.imread(mob_type_wind_path, cv.IMREAD_GRAYSCALE)
@@ -131,9 +140,10 @@ class MobInfo:
 
         current_mobs_list = MobInfo.get_all_mobs()
         current_mobs_list[name] = {
+            "name": name,
             "element": element,
             "map_name": map_name,
-            "height_offset": height_offset
+            "height_offset": int(height_offset)
         }
 
         file = open(json_collection_path, 'w+')
