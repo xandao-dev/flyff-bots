@@ -271,6 +271,8 @@ class Gui:
         #saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
         #selected_mobs = [all_mobs[i] for i in saved_mobs_indexes] # теперь all_mobs это дикт, по числовому индексу не найти
         selected_mobs = sg.user_settings_get_entry("saved_selected_mobs", [])
+        # exist filter
+        selected_mobs = [mob for mob in selected_mobs if mob in all_mobs]
         print('selected_mobs in __load_settings: ', selected_mobs)
         bot.set_config(selected_mobs=selected_mobs)
 
@@ -541,6 +543,7 @@ class Gui:
         ]
         if is_delete_form: selected_mobs_titles = []
         last_highlighted_mob = None
+        exist_selected_names = [name for name in selected_mobs_names if name in all_mobs]
         print('selected_mobs_names: ', selected_mobs_names)
 
         popup_window = sg.Window(
@@ -606,7 +609,7 @@ class Gui:
                 deleted_mobs_names = [mob.split('-')[0].strip() for mob in values["-MOBS_LIST-"]]
                 popup_window.close()
                 # unselect deleted mobs if they were selected
-                bot.set_config(selected_mobs=[name for name in selected_mobs_names if name not in deleted_mobs_names])
+                bot.set_config(selected_mobs=[name for name in exist_selected_names if name not in deleted_mobs_names])
                 MobInfo.delete_mobs(deleted_mobs_names)
                 pass
     
