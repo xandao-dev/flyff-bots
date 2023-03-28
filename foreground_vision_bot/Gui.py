@@ -634,7 +634,7 @@ class Gui:
                 [
                     sg.Text("Choose an image file (mob name): "),
                     sg.Input(key="-IMAGE-", change_submits=True, size=(25, 20), disabled=True, text_color="#000"),
-                    sg.FileBrowse(file_types=("Image files", "*.png *.jpg *.jpeg"))
+                    sg.FileBrowse(file_types=(('Image files', '*.png *.jpg *.jpeg'),))
                 ],
                 [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True, size=(10,20)), sg.Text("(Number, usually in range from 40 to 100)", text_color="grey")],
                 element_buttons_layout,
