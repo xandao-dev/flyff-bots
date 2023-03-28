@@ -184,23 +184,13 @@ class Gui:
 
             # MOBS - Mobs configuration
             if event == "-SELECT_MOBS-":
-                print('bot.config[selected_mobs]', bot.config['selected_mobs'])
-                all_mobs = bot.get_all_mobs()
-                #saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
-                self.__select_mobs_popup(all_mobs, bot, selected_mobs_names=bot.config['selected_mobs'])
-                
-                #bot.set_config(selected_mobs=selected_mobs)
-                #sg.user_settings_set_entry("saved_mobs_indexes", selected_mobs_indexes)
+                self.__select_mobs_popup(bot)
             
             if event == "-ADD_MOB-":
                 self.__add_mob_popup()
-                pass
 
             if event == "-DELETE_MOB-":
-                #self.__delete_mobs_popup()
-                all_mobs = bot.get_all_mobs()
-                self.__select_mobs_popup(all_mobs, bot, selected_mobs_names=bot.config['selected_mobs'], is_delete_form=True)
-                pass
+                self.__select_mobs_popup(bot, is_delete_form=True)
 
             # VIDEO - Bot's Vision
             if values["-SHOW_FRAMES-"]:
@@ -267,14 +257,10 @@ class Gui:
         bot.set_config(convert_penya_to_perins_timer_min=convert_penya_to_perins_timer_min)
 
         all_mobs = bot.get_all_mobs()
-        # saved_mobs_indexes no more neeeded
-        #saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
-        #selected_mobs = [all_mobs[i] for i in saved_mobs_indexes] # теперь all_mobs это дикт, по числовому индексу не найти
-        selected_mobs = sg.user_settings_get_entry("saved_selected_mobs", [])
-        # exist filter
-        selected_mobs = [mob for mob in selected_mobs if mob in all_mobs]
-        print('selected_mobs in __load_settings: ', selected_mobs)
-        bot.set_config(selected_mobs=selected_mobs)
+        selected_mobs_names = sg.user_settings_get_entry("saved_selected_mobs", [])
+        selected_mobs_names = [name for name in selected_mobs_names if name in all_mobs] # exist filter
+        selected_mobs_list = [all_mobs[key] for key in all_mobs if key in selected_mobs_names]
+        bot.set_config(selected_mobs=selected_mobs_list)
 
     def __set_hotkeys(self):
         self.window.bind("<Alt_L><s>", "-STOP_BOT-")
@@ -535,7 +521,10 @@ class Gui:
                 popup_window.close()
                 return values["-DROP-"], handlers[values["-DROP-"]]
             
-    def __select_mobs_popup(self, all_mobs, bot, is_delete_form=False, selected_mobs_names=[]):
+    def __select_mobs_popup(self, bot, is_delete_form=False):
+        all_mobs = bot.get_all_mobs()
+        selected_mobs_names = [mob["name"] for mob in bot.config["selected_mobs"] if mob["name"] in all_mobs]
+
         all_mobs_titles = [f"{name} - {params['element']} - {params['map_name']}" for (name, params) in dict.items(all_mobs)]
         selected_mobs_titles = [
             f"{name} - {params['element']} - {params['map_name']}" for (name, params) in dict.items(all_mobs)
@@ -543,8 +532,6 @@ class Gui:
         ]
         if is_delete_form: selected_mobs_titles = []
         last_highlighted_mob = None
-        exist_selected_names = [name for name in selected_mobs_names if name in all_mobs]
-        print('selected_mobs_names: ', selected_mobs_names)
 
         popup_window = sg.Window(
             "Select Mobs" if not is_delete_form else "Delete mobs",
@@ -589,10 +576,7 @@ class Gui:
                     last_highlighted_mob = None
 
             if event == "-MOBS_LIST-" and len(values["-MOBS_LIST-"]):
-                print('values[-MOBS_LIST-]', values["-MOBS_LIST-"])
-                # values["-MOBS_LIST-"] = ['aibat - flaris - water']
                 selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
-                #selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
                 listbox.update(set_to_index=selected_mobs_indexes)
 
             if event == "Reset":
@@ -600,18 +584,19 @@ class Gui:
             if event == "Save":
                 selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
                 popup_window.close()
-                names = list(dict.keys(all_mobs))
-                sg.user_settings_set_entry("saved_selected_mobs", [names[i] for i in selected_mobs_indexes])
-                bot.set_config(selected_mobs=[names[i] for i in selected_mobs_indexes])
-                return [names[i] for i in selected_mobs_indexes], selected_mobs_indexes
+                all_names = list(dict.keys(all_mobs))
+                selected_names = [all_names[i] for i in selected_mobs_indexes]
+                sg.user_settings_set_entry("saved_selected_mobs", selected_names)
+                bot.set_config(selected_mobs=[all_mobs[name] for name in selected_names])
+                return
             if event == "Delete":
                 from assets.Assets import MobInfo
-                deleted_mobs_names = [mob.split('-')[0].strip() for mob in values["-MOBS_LIST-"]]
+                deleted_mobs_names = [mob.split("-")[0].strip() for mob in values["-MOBS_LIST-"]]
                 popup_window.close()
                 # unselect deleted mobs if they were selected
-                bot.set_config(selected_mobs=[name for name in exist_selected_names if name not in deleted_mobs_names])
+                bot.set_config(selected_mobs=[all_mobs[name] for name in selected_mobs_names if name not in deleted_mobs_names])
                 MobInfo.delete_mobs(deleted_mobs_names)
-                pass
+                return
     
     def __add_mob_popup(self):
         from assets.Assets import mob_type_wind_path, mob_type_fire_path, mob_type_soil_path, mob_type_water_path, mob_type_electricity_path
@@ -634,11 +619,11 @@ class Gui:
                 [
                     sg.Text("Choose an image file (mob name): "),
                     sg.Input(key="-IMAGE-", change_submits=True, size=(25, 20), disabled=True, text_color="#000"),
-                    sg.FileBrowse(file_types=(('Image files', '*.png *.jpg *.jpeg'),))
+                    sg.FileBrowse(file_types=(("Image files", "*.png *.jpg *.jpeg"),))
                 ],
                 [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True, size=(10,20)), sg.Text("(Number, usually in range from 40 to 100)", text_color="grey")],
                 element_buttons_layout,
-                [sg.Frame('', [[sg.Button("Reset"), sg.Button("Save")]], border_width=0, pad=((0, 0),(44, 0)))],
+                [sg.Frame("", [[sg.Button("Reset"), sg.Button("Save")]], border_width=0, pad=((0, 0),(44, 0)))],
             ],
             modal=True,
             size=(500, 225)
@@ -646,7 +631,6 @@ class Gui:
 
         while True:
             event, values = popup_window.read()
-            print('event: ', event, values)
 
             if event == sg.WIN_CLOSED:
                 popup_window.close()
@@ -656,13 +640,13 @@ class Gui:
                      if elem.Disabled: elem.update(disabled=False)
 
                 for value in values:
-                    if value.startswith('-'):
-                        popup_window.Element(value).update('')
+                    if value.startswith("-"):
+                        popup_window.Element(value).update("")
                 pass
             if event == "Save":
                 # form validation
                 is_form_valid = True
-                for key in ['-NAME-', '-MAP-', '-IMAGE-', '-HEIGHT-', '-ELEMENT-']:
+                for key in ["-NAME-", "-MAP-", "-IMAGE-", "-HEIGHT-", "-ELEMENT-"]:
                     if not len(values[key]):
                         is_form_valid = False
                         break
@@ -675,15 +659,13 @@ class Gui:
                     return
             if event == "-HEIGHT-":
                 # height validation - only numbers
-                popup_window.Element(event).update(re.sub('[^0-9]','', values['-HEIGHT-']))
+                popup_window.Element(event).update(re.sub("[^0-9]","", values["-HEIGHT-"]))
                 pass
             if "-ELEMENT-" in event:
-                current_element = event.split('-')[2].lower()
+                current_element = event.split("-")[2].lower()
 
                 for elem in element_buttons_layout:
                      if elem.Disabled: elem.update(disabled=False)
-                popup_window.Element(event).update(disabled=True)
 
-                popup_window.Element('-ELEMENT-').update(current_element)
-                pass
-        pass
+                popup_window.Element(event).update(disabled=True)
+                popup_window.Element("-ELEMENT-").update(current_element)
