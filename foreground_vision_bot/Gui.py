@@ -629,14 +629,14 @@ class Gui:
         popup_window = sg.Window(
             "Add mob",
             [
-                [sg.Text("Enter mob name: "), sg.Input(key="-NAME-")],
-                [sg.Text("Enter map name (location): "), sg.Input(key="-MAP-")],
+                [sg.Text("Enter mob name: "), sg.Input(key="-NAME-", size=(48,20))],
+                [sg.Text("Enter map name (location): "), sg.Input(key="-MAP-", size=(40,20))],
                 [
                     sg.Text("Choose an image file (mob name): "),
                     sg.Input(key="-IMAGE-", change_submits=True, size=(25, 20), disabled=True, text_color="#000"),
                     sg.FileBrowse(file_types=("Image files", "*.png *.jpg *.jpeg"))
                 ],
-                [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True)],
+                [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True, size=(10,20)), sg.Text("(Number, usually in range from 40 to 100)", text_color="grey")],
                 element_buttons_layout,
                 [sg.Frame('', [[sg.Button("Reset"), sg.Button("Save")]], border_width=0, pad=((0, 0),(44, 0)))],
             ],
