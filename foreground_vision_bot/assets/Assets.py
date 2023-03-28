@@ -176,13 +176,7 @@ class MobInfo:
             file.close()
 
         mobs_list = json.load(open(json_collection_path, 'r'))
-        print('------>',mobs_list)
         return mobs_list
-        #return [
-        #    getattr(MobInfo, attr)
-        #    for attr in dir(MobInfo)
-        #    if not attr.startswith("__") and not callable(getattr(MobInfo, attr))
-        #]
 
 
 class GeneralAssets:
