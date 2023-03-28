@@ -3,7 +3,7 @@ from threading import Thread
 from time import sleep, time
 
 import pyttsx3
-from assets.Assets import GeneralAssets, MobInfo, MobType, MobTypesDict
+from assets.Assets import GeneralAssets, MobInfo, MobType
 from libs.ComputerVision import ComputerVision as CV
 from libs.human_mouse.HumanMouse import HumanMouse
 from libs.HumanKeyboard import VKEY, HumanKeyboard
@@ -302,7 +302,7 @@ class Bot:
             frame=self.frame,
             crop_area=(0, 50, 200, -200),
             #template=current_mob["element_img"],
-            template=MobTypesDict[current_mob["element"].upper()],
+            template=getattr(MobType, current_mob["element"].upper()),
             threshold=float(self.config["mob_still_alive_match_threshold"]),
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Mob still alive" if debug and self.config["show_matches_text"] else None,

@@ -28,14 +28,6 @@ mob_life_bar_path = str(Path(__file__).parent / "general" / "mob_life_bar.png")
 user_target_bar_path = str(Path(__file__).parent / "general" / "user_target_bar.png")
 inventory_perin_converter_path = str(Path(__file__).parent / "general" / "inventory_perin_converter.png")
 inventory_icons_path = str(Path(__file__).parent / "general" / "inventory_icons.png")
-
-MobTypesDict = {
-    'WIND': cv.imread(mob_type_wind_path, cv.IMREAD_GRAYSCALE),
-    'FIRE': cv.imread(mob_type_fire_path, cv.IMREAD_GRAYSCALE),
-    'SOIL': cv.imread(mob_type_soil_path, cv.IMREAD_GRAYSCALE),
-    'WATER': cv.imread(mob_type_water_path, cv.IMREAD_GRAYSCALE),
-    'ELECTRICITY': cv.imread(mob_type_electricity_path, cv.IMREAD_GRAYSCALE)
-}
     
 
 class MobType:
@@ -143,7 +135,7 @@ class MobInfo:
             "name": name,
             "element": element,
             "map_name": map_name,
-            "height_offset": int(height_offset)
+            "height_offset": height_offset
         }
 
         file = open(json_collection_path, 'w+')

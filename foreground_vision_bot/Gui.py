@@ -670,7 +670,7 @@ class Gui:
                 if is_form_valid:
                     from assets.Assets import MobInfo
                     MobInfo.add_new_mob(name=values["-NAME-"], map_name=values["-MAP-"], image_path=values["-IMAGE-"],
-                                        height_offset=values["-HEIGHT-"], element=values["-ELEMENT-"])
+                                        height_offset=int(values["-HEIGHT-"]), element=values["-ELEMENT-"])
                     popup_window.close()
                     return
             if event == "PRINT FORM":
