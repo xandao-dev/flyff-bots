@@ -634,11 +634,11 @@ class Gui:
                 [
                     sg.Text("Choose an image file (mob name): "),
                     sg.Input(key="-IMAGE-", change_submits=True, size=(25, 20), disabled=True, text_color="#000"),
-                    sg.FileBrowse()
+                    sg.FileBrowse(file_types=("Image files", "*.png *.jpg *.jpeg"))
                 ],
                 [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True)],
                 element_buttons_layout,
-                [sg.Frame('', [[sg.Button("Reset"), sg.Button("Save"), sg.Button("PRINT FORM")]], border_width=0, pad=((0, 0),(44, 0)))],
+                [sg.Frame('', [[sg.Button("Reset"), sg.Button("Save")]], border_width=0, pad=((0, 0),(44, 0)))],
             ],
             modal=True,
             size=(500, 225)
@@ -673,9 +673,6 @@ class Gui:
                                         height_offset=int(values["-HEIGHT-"]), element=values["-ELEMENT-"])
                     popup_window.close()
                     return
-            if event == "PRINT FORM":
-                print('values:', values)
-                pass
             if event == "-HEIGHT-":
                 # height validation - only numbers
                 popup_window.Element(event).update(re.sub('[^0-9]','', values['-HEIGHT-']))
