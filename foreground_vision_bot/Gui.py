@@ -4,6 +4,8 @@ import cv2 as cv
 import PySimpleGUI as sg
 from utils.helpers import get_window_handlers, hex_variant
 
+import re
+
 
 class Gui:
     def __init__(self, theme="DarkAmber"):
@@ -182,11 +184,13 @@ class Gui:
 
             # MOBS - Mobs configuration
             if event == "-SELECT_MOBS-":
-                all_mobs = bot.get_all_mobs()
-                saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
-                selected_mobs, selected_mobs_indexes = self.__select_mobs_popup(all_mobs, saved_mobs_indexes)
-                bot.set_config(selected_mobs=selected_mobs)
-                sg.user_settings_set_entry("saved_mobs_indexes", selected_mobs_indexes)
+                self.__select_mobs_popup(bot)
+            
+            if event == "-ADD_MOB-":
+                self.__add_mob_popup()
+
+            if event == "-DELETE_MOB-":
+                self.__select_mobs_popup(bot, is_delete_form=True)
 
             # VIDEO - Bot's Vision
             if values["-SHOW_FRAMES-"]:
@@ -253,9 +257,10 @@ class Gui:
         bot.set_config(convert_penya_to_perins_timer_min=convert_penya_to_perins_timer_min)
 
         all_mobs = bot.get_all_mobs()
-        saved_mobs_indexes = sg.user_settings_get_entry("saved_mobs_indexes", [])
-        selected_mobs = [all_mobs[i] for i in saved_mobs_indexes]
-        bot.set_config(selected_mobs=selected_mobs)
+        selected_mobs_names = sg.user_settings_get_entry("saved_selected_mobs", [])
+        selected_mobs_names = [name for name in selected_mobs_names if name in all_mobs] # exist filter
+        selected_mobs_list = [all_mobs[key] for key in all_mobs if key in selected_mobs_names]
+        bot.set_config(selected_mobs=selected_mobs_list)
 
     def __set_hotkeys(self):
         self.window.bind("<Alt_L><s>", "-STOP_BOT-")
@@ -310,8 +315,8 @@ class Gui:
                 [
                     [
                         sg.Button("Select Mobs", key="-SELECT_MOBS-"),
-                        sg.Button("Add Mob", disabled=True, key="-ADD_MOB-"),
-                        sg.Button("Delete Mob", disabled=True, key="-DELETE_MOB-"),
+                        sg.Button("Add Mob", key="-ADD_MOB-"),
+                        sg.Button("Delete Mob", key="-DELETE_MOB-"),
                     ]
                 ],
                 pad=((5, 15), (10, 5)),
@@ -515,20 +520,23 @@ class Gui:
             if event == "OK":
                 popup_window.close()
                 return values["-DROP-"], handlers[values["-DROP-"]]
+            
+    def __select_mobs_popup(self, bot, is_delete_form=False):
+        all_mobs = bot.get_all_mobs()
+        selected_mobs_names = [mob["name"] for mob in bot.config["selected_mobs"] if mob["name"] in all_mobs]
 
-    def __select_mobs_popup(self, all_mobs, selected_mobs_indexes=[]):
-        all_mobs_titles = [f"{mob['name']} - {mob['element']} - {mob['map_name']}" for mob in all_mobs]
+        all_mobs_titles = [f"{name} - {params['element']} - {params['map_name']}" for (name, params) in dict.items(all_mobs)]
         selected_mobs_titles = [
-            f"{mob['name']} - {mob['element']} - {mob['map_name']}"
-            for i, mob in enumerate(all_mobs)
-            if i in selected_mobs_indexes
+            f"{name} - {params['element']} - {params['map_name']}" for (name, params) in dict.items(all_mobs)
+            if name in selected_mobs_names
         ]
+        if is_delete_form: selected_mobs_titles = []
         last_highlighted_mob = None
 
         popup_window = sg.Window(
-            "Select Mobs",
+            "Select Mobs" if not is_delete_form else "Delete mobs",
             [
-                [sg.Text("Please select the mobs to kill:")],
+                [sg.Text(f"Select the mobs to {'kill' if not is_delete_form else 'delete'}:")],
                 [sg.Text("Find: "), sg.Input(enable_events=True, expand_x=True, key="-MOBS_SEARCH-")],
                 [
                     sg.Listbox(
@@ -540,7 +548,7 @@ class Gui:
                         key="-MOBS_LIST-",
                     )
                 ],
-                [sg.Button("Reset"), sg.OK()],
+                [sg.Button("Reset"), sg.Button("Save" if not is_delete_form else "Delete", button_color=None if not is_delete_form else "#ea4335")],
             ],
         )
         listbox = popup_window["-MOBS_LIST-"]
@@ -573,6 +581,91 @@ class Gui:
 
             if event == "Reset":
                 listbox.update(set_to_index=[])
-            if event == "OK":
+            if event == "Save":
+                selected_mobs_indexes = [all_mobs_titles.index(mob) for mob in values["-MOBS_LIST-"]]
                 popup_window.close()
-                return [all_mobs[i] for i in selected_mobs_indexes], selected_mobs_indexes
+                all_names = list(dict.keys(all_mobs))
+                selected_names = [all_names[i] for i in selected_mobs_indexes]
+                sg.user_settings_set_entry("saved_selected_mobs", selected_names)
+                bot.set_config(selected_mobs=[all_mobs[name] for name in selected_names])
+                return
+            if event == "Delete":
+                from assets.Assets import MobInfo
+                deleted_mobs_names = [mob.split("-")[0].strip() for mob in values["-MOBS_LIST-"]]
+                popup_window.close()
+                # unselect deleted mobs if they were selected
+                bot.set_config(selected_mobs=[all_mobs[name] for name in selected_mobs_names if name not in deleted_mobs_names])
+                MobInfo.delete_mobs(deleted_mobs_names)
+                return
+    
+    def __add_mob_popup(self):
+        from assets.Assets import mob_type_wind_path, mob_type_fire_path, mob_type_soil_path, mob_type_water_path, mob_type_electricity_path
+
+        element_buttons_layout = [
+            sg.Text("Select mob element: "),
+            sg.Input(key="-ELEMENT-", visible=False), # hidden controlled input
+            sg.Button("", image_source=mob_type_wind_path, key="-ELEMENT-WIND-"),
+            sg.Button("", image_source=mob_type_fire_path, key="-ELEMENT-FIRE-"),
+            sg.Button("", image_source=mob_type_soil_path, key="-ELEMENT-SOIL-"),
+            sg.Button("", image_source=mob_type_water_path, key="-ELEMENT-WATER-"),
+            sg.Button("", image_source=mob_type_electricity_path, key="-ELEMENT-ELECTRICITY")
+        ]
+
+        popup_window = sg.Window(
+            "Add mob",
+            [
+                [sg.Text("Enter mob name: "), sg.Input(key="-NAME-", size=(48,20))],
+                [sg.Text("Enter map name (location): "), sg.Input(key="-MAP-", size=(40,20))],
+                [
+                    sg.Text("Choose an image file (mob name): "),
+                    sg.Input(key="-IMAGE-", change_submits=True, size=(25, 20), disabled=True, text_color="#000"),
+                    sg.FileBrowse(file_types=(("Image files", "*.png *.jpg *.jpeg"),))
+                ],
+                [sg.Text("Enter height offset: "), sg.Input(key="-HEIGHT-", enable_events=True, size=(10,20)), sg.Text("(Number, usually in range from 40 to 100)", text_color="grey")],
+                element_buttons_layout,
+                [sg.Frame("", [[sg.Button("Reset"), sg.Button("Save")]], border_width=0, pad=((0, 0),(44, 0)))],
+            ],
+            modal=True,
+            size=(500, 225)
+        )
+
+        while True:
+            event, values = popup_window.read()
+
+            if event == sg.WIN_CLOSED:
+                popup_window.close()
+                return
+            if event == "Reset":
+                for elem in element_buttons_layout:
+                     if elem.Disabled: elem.update(disabled=False)
+
+                for value in values:
+                    if value.startswith("-"):
+                        popup_window.Element(value).update("")
+                pass
+            if event == "Save":
+                # form validation
+                is_form_valid = True
+                for key in ["-NAME-", "-MAP-", "-IMAGE-", "-HEIGHT-", "-ELEMENT-"]:
+                    if not len(values[key]):
+                        is_form_valid = False
+                        break
+
+                if is_form_valid:
+                    from assets.Assets import MobInfo
+                    MobInfo.add_new_mob(name=values["-NAME-"], map_name=values["-MAP-"], image_path=values["-IMAGE-"],
+                                        height_offset=int(values["-HEIGHT-"]), element=values["-ELEMENT-"])
+                    popup_window.close()
+                    return
+            if event == "-HEIGHT-":
+                # height validation - only numbers
+                popup_window.Element(event).update(re.sub("[^0-9]","", values["-HEIGHT-"]))
+                pass
+            if "-ELEMENT-" in event:
+                current_element = event.split("-")[2].lower()
+
+                for elem in element_buttons_layout:
+                     if elem.Disabled: elem.update(disabled=False)
+
+                popup_window.Element(event).update(disabled=True)
+                popup_window.Element("-ELEMENT-").update(current_element)
