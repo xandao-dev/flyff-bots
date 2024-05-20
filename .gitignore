@@ -1,5 +1,6 @@
 # Project
 *.json
+!foreground_vision_bot/assets/mobs_list.json
 gui-inspect-tools
 private_assets
 

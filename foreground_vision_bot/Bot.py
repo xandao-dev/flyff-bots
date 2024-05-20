@@ -3,7 +3,7 @@ from threading import Thread
 from time import sleep, time
 
 import pyttsx3
-from assets.Assets import GeneralAssets, MobInfo
+from assets.Assets import GeneralAssets, MobInfo, MobType
 from libs.ComputerVision import ComputerVision as CV
 from libs.human_mouse.HumanMouse import HumanMouse
 from libs.HumanKeyboard import VKEY, HumanKeyboard
@@ -12,6 +12,8 @@ from utils.decorators import throttle
 from utils.helpers import get_point_near_center, start_countdown
 from utils.SyncedTimer import SyncedTimer
 
+import cv2 as cv
+from pathlib import Path
 
 @throttle()
 def emit_msg(gui_window, color, msg):
@@ -265,14 +267,14 @@ class Bot:
     """Match Methods"""
 
     def __get_mobs_position(self, current_mob, debug=False):
-        if current_mob["name_img"] is None or current_mob["height_offset"] is None:
+        if current_mob["height_offset"] is None:
             return []
 
         # frame_cute_area 50px from each side of the frame to avoid some UI elements
         matches, drawn_frame = CV.match_template_multi(
             frame=self.frame,
             crop_area=(50, -50, 50, -50),
-            template=current_mob["name_img"],
+            template=cv.imread(str(Path(__file__).parent / "assets" / "names" / f"{current_mob['name']}.png"), cv.IMREAD_GRAYSCALE),
             threshold=float(self.config["mob_pos_match_threshold"]),
             box_offset=(0, current_mob["height_offset"]),
             frame_to_draw=self.debug_frame if debug else None,
@@ -295,7 +297,7 @@ class Bot:
         _, _, _, passed_threshold, drawn_frame = CV.match_template(
             frame=self.frame,
             crop_area=(0, 50, 200, -200),
-            template=current_mob["element_img"],
+            template=getattr(MobType, current_mob["element"].upper()),
             threshold=float(self.config["mob_still_alive_match_threshold"]),
             frame_to_draw=self.debug_frame if debug else None,
             text_to_draw="Mob still alive" if debug and self.config["show_matches_text"] else None,
